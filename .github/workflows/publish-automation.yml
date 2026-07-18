@@ -10,7 +10,17 @@ on:
     branches:
       - main
     paths:
-      - "plugins/akasha-genshin-automation/**"
+      - "plugins/akasha-genshin-automation/manifest.json"
+      - "plugins/akasha-genshin-automation/frontend/**"
+      - "plugins/akasha-genshin-automation/backend/Directory.Build.props"
+      - "plugins/akasha-genshin-automation/backend/global.json"
+      - "plugins/akasha-genshin-automation/backend/build/**"
+      - "plugins/akasha-genshin-automation/backend/src/**"
+      - "plugins/akasha-genshin-automation/packaging/Publish-Plugin.ps1"
+      - "plugins/akasha-genshin-automation/README.md"
+      - "plugins/akasha-genshin-automation/LICENSE"
+      - "plugins/akasha-genshin-automation/DERIVATION.md"
+      - "plugins/akasha-genshin-automation/THIRD_PARTY_NOTICES.md"
   workflow_dispatch:
     inputs:
       draft:
@@ -126,8 +136,13 @@ jobs:
               "plugins/$PLUGIN_ID/frontend"
               "plugins/$PLUGIN_ID/backend/Directory.Build.props"
               "plugins/$PLUGIN_ID/backend/global.json"
+              "plugins/$PLUGIN_ID/backend/build"
               "plugins/$PLUGIN_ID/backend/src"
               "plugins/$PLUGIN_ID/packaging/Publish-Plugin.ps1"
+              "plugins/$PLUGIN_ID/README.md"
+              "plugins/$PLUGIN_ID/LICENSE"
+              "plugins/$PLUGIN_ID/DERIVATION.md"
+              "plugins/$PLUGIN_ID/THIRD_PARTY_NOTICES.md"
             )
             if ! git diff --quiet "$target" "$GITHUB_SHA" -- "${release_sources[@]}"; then
               echo "::error::Existing Release source differs from the current plugin source."
