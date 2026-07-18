@@ -18,6 +18,11 @@ on:
         required: true
         default: true
         type: boolean
+      resume_existing_release:
+        description: "Resume CNB/catalog publication from an existing GitHub Release"
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -39,8 +44,11 @@ jobs:
       asset: ${{ steps.manifest.outputs.asset }}
       draft: ${{ steps.manifest.outputs.draft }}
       prerelease: ${{ steps.manifest.outputs.prerelease }}
+      release_exists: ${{ steps.release.outputs.exists }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -85,21 +93,49 @@ jobs:
           "draft=$($draft.ToLowerInvariant())" >> $env:GITHUB_OUTPUT
           "prerelease=$($version.Contains('-').ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
 
-      - name: Reject an already published version
+      - name: Resolve existing GitHub Release
+        id: release
         if: github.event_name != 'pull_request'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.manifest.outputs.tag }}
+          RESUME_EXISTING_RELEASE: ${{ inputs.resume_existing_release }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] &&
              [ "${{ github.ref_name }}" != "main" ]; then
             echo "::error::Manual releases must run from main."
             exit 1
           fi
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "::error::Release $TAG already exists; bump manifest.version."
-            exit 1
+
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            if [ "${{ github.event_name }}" != "workflow_dispatch" ] ||
+               [ "$RESUME_EXISTING_RELEASE" != "true" ]; then
+              echo "::error::Release $TAG already exists; bump manifest.version or explicitly resume it."
+              exit 1
+            fi
+
+            target="$(
+              gh release view "$TAG" \
+                --repo "$GITHUB_REPOSITORY" \
+                --json targetCommitish \
+                --jq .targetCommitish
+            )"
+            release_sources=(
+              "plugins/$PLUGIN_ID/manifest.json"
+              "plugins/$PLUGIN_ID/frontend"
+              "plugins/$PLUGIN_ID/backend/Directory.Build.props"
+              "plugins/$PLUGIN_ID/backend/global.json"
+              "plugins/$PLUGIN_ID/backend/src"
+              "plugins/$PLUGIN_ID/packaging/Publish-Plugin.ps1"
+            )
+            if ! git diff --quiet "$target" "$GITHUB_SHA" -- "${release_sources[@]}"; then
+              echo "::error::Existing Release source differs from the current plugin source."
+              exit 1
+            fi
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
   build:
@@ -158,6 +194,9 @@ jobs:
     needs:
       - validate
       - build
+    outputs:
+      verified_size: ${{ steps.readback.outputs.verified_size }}
+      verified_sha256: ${{ steps.readback.outputs.verified_sha256 }}
     permissions:
       contents: write
     steps:
@@ -167,6 +206,7 @@ jobs:
           path: release
 
       - name: Create GitHub Release
+        if: needs.validate.outputs.release_exists != 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.validate.outputs.tag }}
@@ -181,6 +221,7 @@ jobs:
             release/${{ needs.validate.outputs.asset }}.sha256
 
       - name: Verify GitHub Release readback
+        id: readback
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -188,13 +229,27 @@ jobs:
           ASSET: ${{ needs.validate.outputs.asset }}
           EXPECTED_SIZE: ${{ needs.build.outputs.package_size }}
           EXPECTED_SHA256: ${{ needs.build.outputs.package_sha256 }}
+          RELEASE_EXISTS: ${{ needs.validate.outputs.release_exists }}
         run: |
           mkdir readback
-          gh release download "$TAG" --pattern "$ASSET" --dir readback
+          gh release download "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern "$ASSET" \
+            --dir readback
+          gh release download "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern "$ASSET.sha256" \
+            --dir readback
           actual_size="$(stat -c%s "readback/$ASSET")"
           actual_sha256="$(sha256sum "readback/$ASSET" | cut -d' ' -f1)"
-          test "$actual_size" = "$EXPECTED_SIZE"
-          test "$actual_sha256" = "$EXPECTED_SHA256"
+          checksum_sha256="$(cut -d' ' -f1 "readback/$ASSET.sha256")"
+          test "$actual_sha256" = "$checksum_sha256"
+          if [ "$RELEASE_EXISTS" != "true" ]; then
+            test "$actual_size" = "$EXPECTED_SIZE"
+            test "$actual_sha256" = "$EXPECTED_SHA256"
+          fi
+          echo "verified_size=$actual_size" >> "$GITHUB_OUTPUT"
+          echo "verified_sha256=$actual_sha256" >> "$GITHUB_OUTPUT"
 
   cnb_release:
     name: Create and verify CNB Release
@@ -212,6 +267,21 @@ jobs:
         with:
           name: ${{ needs.validate.outputs.tag }}
           path: release
+
+      - name: Reuse verified GitHub Release assets
+        if: needs.validate.outputs.release_exists == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.validate.outputs.tag }}
+          ASSET: ${{ needs.validate.outputs.asset }}
+        run: |
+          rm -f "release/$ASSET" "release/$ASSET.sha256"
+          gh release download "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern "$ASSET" \
+            --pattern "$ASSET.sha256" \
+            --dir release
 
       - uses: actions/setup-python@v5
         with:
@@ -239,8 +309,8 @@ jobs:
         env:
           ASSET: ${{ needs.validate.outputs.asset }}
           TAG: ${{ needs.validate.outputs.tag }}
-          EXPECTED_SIZE: ${{ needs.build.outputs.package_size }}
-          EXPECTED_SHA256: ${{ needs.build.outputs.package_sha256 }}
+          EXPECTED_SIZE: ${{ needs.github_release.outputs.verified_size }}
+          EXPECTED_SHA256: ${{ needs.github_release.outputs.verified_sha256 }}
         run: |
           url="https://cnb.cool/AkashaNavigator/akasha-plugins/-/releases/download/$TAG/$ASSET"
           curl --fail --location --retry 6 --retry-delay 5 \
@@ -287,8 +357,8 @@ jobs:
         env:
           PLUGIN_VERSION: ${{ needs.validate.outputs.version }}
           PLUGIN_ASSET: ${{ needs.validate.outputs.asset }}
-          PACKAGE_SIZE: ${{ needs.build.outputs.package_size }}
-          PACKAGE_SHA256: ${{ needs.build.outputs.package_sha256 }}
+          PACKAGE_SIZE: ${{ needs.github_release.outputs.verified_size }}
+          PACKAGE_SHA256: ${{ needs.github_release.outputs.verified_sha256 }}
         run: |
           import json
           import os
@@ -327,8 +397,8 @@ jobs:
       - name: Verify staged automation metadata
         shell: python
         env:
-          EXPECTED_SIZE: ${{ needs.build.outputs.package_size }}
-          EXPECTED_SHA256: ${{ needs.build.outputs.package_sha256 }}
+          EXPECTED_SIZE: ${{ needs.github_release.outputs.verified_size }}
+          EXPECTED_SHA256: ${{ needs.github_release.outputs.verified_sha256 }}
         run: |
           import json
           import os
