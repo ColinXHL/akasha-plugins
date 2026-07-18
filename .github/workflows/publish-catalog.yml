@@ -67,23 +67,38 @@ jobs:
       - name: Install validation dependencies
         run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
 
+      - name: Prepare previous catalog worktree
+        shell: bash
+        env:
+          CATALOG_ROOT: ${{ runner.temp }}/catalog-worktree
+        run: |
+          if git ls-remote --exit-code --heads origin catalog >/dev/null 2>&1; then
+            git fetch origin catalog
+            git worktree add -B catalog "$CATALOG_ROOT" origin/catalog
+          else
+            git worktree add --detach "$CATALOG_ROOT"
+            git -C "$CATALOG_ROOT" switch --orphan catalog
+            git -C "$CATALOG_ROOT" rm -rf . >/dev/null 2>&1 || true
+          fi
+
       - name: Stage catalog
         shell: pwsh
         run: >-
           ./build/Publish-Catalog.ps1
           -SourceCommit "${{ steps.source.outputs.commit }}"
+          -PreviousCatalogDirectory "${{ runner.temp }}/catalog-worktree"
 
-      - name: Verify staged catalog
+      - name: Rebuild catalog deterministically
         shell: pwsh
         run: >-
-          ./build/Generate-RepositoryIndex.ps1
-          -Commit "${{ steps.source.outputs.commit }}"
-          -OutputPath "artifacts/expected-repo.json"
-          -RequireReleaseIntegrity
+          ./build/Publish-Catalog.ps1
+          -SourceCommit "${{ steps.source.outputs.commit }}"
+          -OutputDirectory "artifacts/expected-catalog"
+          -PreviousCatalogDirectory "${{ runner.temp }}/catalog-worktree"
 
-      - name: Compare generated index
+      - name: Compare staged catalog
         shell: bash
-        run: cmp artifacts/catalog/repo.json artifacts/expected-repo.json
+        run: diff -r artifacts/catalog artifacts/expected-catalog
 
       - name: Publish catalog branch to GitHub
         id: github_publish
@@ -94,15 +109,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          if git ls-remote --exit-code --heads origin catalog >/dev/null 2>&1; then
-            git fetch origin catalog
-            git worktree add -B catalog "$CATALOG_ROOT" origin/catalog
-          else
-            git worktree add --detach "$CATALOG_ROOT"
-            git -C "$CATALOG_ROOT" switch --orphan catalog
-            git -C "$CATALOG_ROOT" rm -rf . >/dev/null 2>&1 || true
-          fi
 
           find "$CATALOG_ROOT" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
           cp -a artifacts/catalog/. "$CATALOG_ROOT/"

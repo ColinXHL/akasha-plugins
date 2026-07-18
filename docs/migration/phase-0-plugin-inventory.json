@@ -6,6 +6,7 @@
       "name": "Akasha 原神自动化",
       "baselineVersion": "0.4.3",
       "sourceRepository": "https://github.com/ColinXHL/akasha-automation",
+      "sourceCommit": "e5e7ca5",
       "sourcePath": "plugin/akasha-genshin-automation",
       "targetPath": "plugins/akasha-genshin-automation",
       "distributionType": "release"

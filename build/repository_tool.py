@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import shutil
 import sys
@@ -265,8 +266,11 @@ def copy_plugin_to_catalog(record: PluginRecord, target: Path) -> None:
     target.mkdir(parents=True, exist_ok=True)
 
     if distribution_type == "release":
-        for file_name in ("manifest.json", "README.md"):
-            shutil.copy2(record.directory / file_name, target / file_name)
+        write_json(target / "manifest.json", record.manifest)
+        shutil.copy2(
+            record.directory / "README.md",
+            target / "README.md",
+        )
         return
 
     for source in sorted(record.directory.rglob("*")):
@@ -279,6 +283,155 @@ def copy_plugin_to_catalog(record: PluginRecord, target: Path) -> None:
         destination = target / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
+
+
+def has_release_integrity(manifest: dict[str, Any]) -> bool:
+    distribution = manifest.get("distribution", {})
+    return (
+        distribution.get("type") != "release"
+        or (
+            isinstance(distribution.get("sha256"), str)
+            and len(distribution["sha256"]) == 64
+            and isinstance(distribution.get("size"), int)
+            and distribution["size"] > 0
+        )
+    )
+
+
+def apply_release_metadata(
+    records: list[PluginRecord],
+    metadata_path: Path | None,
+) -> list[PluginRecord]:
+    if metadata_path is None:
+        return records
+
+    metadata = load_json(metadata_path)
+    required = {
+        "pluginId",
+        "version",
+        "asset",
+        "size",
+        "sha256",
+    }
+    if set(metadata) != required:
+        raise RepositoryValidationError(
+            [
+                f"{metadata_path}: release metadata must contain exactly "
+                f"{sorted(required)}"
+            ]
+        )
+
+    plugin_id = metadata["pluginId"]
+    matches = [
+        record
+        for record in records
+        if record.manifest["id"] == plugin_id
+    ]
+    if len(matches) != 1:
+        raise RepositoryValidationError(
+            [
+                f"{metadata_path}: release plugin {plugin_id!r} "
+                "does not exist exactly once"
+            ]
+        )
+
+    source = matches[0]
+    distribution = source.manifest["distribution"]
+    if (
+        distribution["type"] != "release"
+        or metadata["version"] != source.manifest["version"]
+        or metadata["asset"] != distribution["asset"]
+        or not isinstance(metadata["size"], int)
+        or metadata["size"] <= 0
+        or not isinstance(metadata["sha256"], str)
+        or len(metadata["sha256"]) != 64
+        or any(
+            character not in "0123456789abcdef"
+            for character in metadata["sha256"]
+        )
+    ):
+        raise RepositoryValidationError(
+            [
+                f"{metadata_path}: release metadata does not match "
+                f"{source.manifest_path}"
+            ]
+        )
+
+    manifest = copy.deepcopy(source.manifest)
+    manifest["distribution"]["size"] = metadata["size"]
+    manifest["distribution"]["sha256"] = metadata["sha256"]
+    replacement = PluginRecord(
+        source.directory,
+        source.manifest_path,
+        manifest,
+    )
+    return [
+        replacement if record is source else record
+        for record in records
+    ]
+
+
+def load_previous_release_record(
+    root: Path,
+    source: PluginRecord,
+) -> PluginRecord | None:
+    manifest_path = (
+        root
+        / "plugins"
+        / source.manifest["id"]
+        / "manifest.json"
+    )
+    if not manifest_path.is_file():
+        return None
+
+    manifest = load_json(manifest_path)
+    validator = create_manifest_validator(source.directory.parents[1])
+    errors = [
+        f"{manifest_path}: {error.message}"
+        for error in validator.iter_errors(manifest)
+    ]
+    if (
+        manifest.get("id") != source.manifest["id"]
+        or manifest.get("distribution", {}).get("type") != "release"
+        or not has_release_integrity(manifest)
+    ):
+        errors.append(
+            f"{manifest_path}: previous catalog release metadata is invalid"
+        )
+    errors.extend(
+        f"{manifest_path}: {message}"
+        for message in validate_release_naming(manifest)
+    )
+    readme = manifest_path.parent / "README.md"
+    if not readme.is_file():
+        errors.append(f"{readme}: previous catalog README does not exist")
+    if errors:
+        raise RepositoryValidationError(errors)
+    return PluginRecord(manifest_path.parent, manifest_path, manifest)
+
+
+def resolve_catalog_records(
+    records: list[PluginRecord],
+    previous_catalog: Path | None,
+) -> list[PluginRecord]:
+    resolved: list[PluginRecord] = []
+    for record in records:
+        if has_release_integrity(record.manifest):
+            resolved.append(record)
+            continue
+
+        previous = (
+            load_previous_release_record(previous_catalog, record)
+            if previous_catalog is not None
+            else None
+        )
+        if previous is not None:
+            resolved.append(previous)
+
+    return sorted(
+        resolved,
+        key=lambda record: record.manifest["id"],
+    )
 
 
 def reset_staging_directory(root: Path, output: Path) -> None:
@@ -316,8 +469,13 @@ def command_generate(args: argparse.Namespace) -> None:
 def command_stage(args: argparse.Namespace) -> None:
     records = discover_plugins(
         args.root,
-        require_release_integrity=True,
+        require_release_integrity=False,
     )
+    records = apply_release_metadata(
+        records,
+        args.release_metadata,
+    )
+    records = resolve_catalog_records(records, args.previous_catalog)
     reset_staging_directory(args.root, args.output)
     for record in records:
         copy_plugin_to_catalog(
@@ -367,6 +525,8 @@ def build_parser() -> argparse.ArgumentParser:
     stage = subparsers.add_parser("stage")
     stage.add_argument("--commit", required=True, type=commit_sha)
     stage.add_argument("--output", required=True, type=path_value)
+    stage.add_argument("--previous-catalog", type=path_value)
+    stage.add_argument("--release-metadata", type=path_value)
     stage.set_defaults(handler=command_stage)
     return parser
 

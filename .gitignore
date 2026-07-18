@@ -4,6 +4,7 @@ obj/
 dist/
 artifacts/
 publish/
+out/
 
 # Release packages and compiled workers
 *.zip

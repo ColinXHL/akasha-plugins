@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\AkashaAutomation.Core\AkashaAutomation.Core.csproj" />
+    <ProjectReference Include="..\AkashaAutomation.Features\AkashaAutomation.Features.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <PublishSingleFile>false</PublishSingleFile>
+    <AssemblyName>AkashaAutomation.Worker</AssemblyName>
+    <ApplicationManifest>..\..\build\AkashaAutomation.app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+</Project>

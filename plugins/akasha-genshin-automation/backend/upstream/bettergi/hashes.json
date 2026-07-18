@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "SHA-256",
+  "assets": [
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Config/Pick/default_pick_black_lists.json",
+      "sha256": "1129650653eed1ec7e81676b3f616895feb9433ab616efc98ac360232c7e7ea9"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoPick/1920x1080/E.png",
+      "sha256": "09cc25ef17a7aab56f147f40f4a1373ae3bce06fc966929cc8d34ef85e61cd55"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoPick/1920x1080/F.png",
+      "sha256": "ce0100ebf90a4c98e6b34b5ee3777d973c9ae05322972d552fc718817e66271b"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoPick/1920x1080/G.png",
+      "sha256": "724edac6d0da519ac44d7a973db51990a95cf9b80005d1973caaaabb684543d7"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoPick/1920x1080/L.png",
+      "sha256": "51008048871d25dbb5713de10cadfa3516c11047eb0675994b997cdc18910e87"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoPick/1920x1080/icon_settings.png",
+      "sha256": "3bc1a9010f337e6990aae0b88ef81b0ea5f4621465bdca45fb90dc0190b07537"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoPick/1920x1080/icon_option.png",
+      "sha256": "b4f03c5641447fc30f2a3a92ab189e0fbc55444985c9baeedd68d3d506e68505"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Config/Skip/default_pause_options.json",
+      "sha256": "212962f57e0bb0c04d9c3af062be53ddd929573f0399bc29b4476ec646f2ef65"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Config/Skip/pause_options.json",
+      "sha256": "fcc7d1e985862f0e3b0cc59cad7312642f7e96a318a73fc7646c093701a08b5b"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Config/Skip/select_options.json",
+      "sha256": "8585ca3368566a6efe15ef52a816494ac2469470d7ac3b806d3d329cb4b36e88"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Model/PaddleOCR/README.md",
+      "sha256": "195c0939e6ec90e99e10153c22778d4e8f18574cfbc776937796e3adfb950981"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Model/PaddleOCR/test_pp_ocr.png",
+      "sha256": "583caa82c158da88cbeb0bdb209ada6a7658fd43df306c2a2aa846700a4de376"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Model/PaddleOCR/Det/V4/PP-OCRv4_mobile_det_infer/inference.yml",
+      "sha256": "7a71be98abcc1038fb0d10fad3efb58407fcd5ac4ac3fb45a5544c143bc4763e"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Model/PaddleOCR/Det/V4/PP-OCRv4_mobile_det_infer/slim.onnx",
+      "sha256": "c0f2e256776e81d9e38f49e7cc2a37864a326ee8097e84adf30a8e0ebcc0b24b"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Model/PaddleOCR/Rec/V4/PP-OCRv4_mobile_rec_infer/inference.yml",
+      "sha256": "018c94645678dc492754754291705c4999f35c6e5be854a42b4f918fefd06ab4"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Model/PaddleOCR/Rec/V4/PP-OCRv4_mobile_rec_infer/slim.onnx",
+      "sha256": "df79157f86aa181ee0daa43364203cfc892f98e2a1b425614a1c98e0b96d7393"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/chat_review.png",
+      "sha256": "01329715d8e393e05edeaa8201091f9477867c2ab354d634d3a1a6924ee6fa48"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/collect.png",
+      "sha256": "ab53c472b7a857ea082b9db2e92d360bc9dda005f361781b0fc6ea3eb8663739"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/comfirm_btn1.png",
+      "sha256": "9483c91e6c54eb436023961c7f07cb332f2b86bb0c9568d8ff009f0102b38340"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/comfirm_btn2.png",
+      "sha256": "7d41269bb6d206e36c31a770df862c736efdbd36426207ccdeb7c2c446e5e21c"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/cook.png",
+      "sha256": "8d1034166db5737eea45336935db9157e1442213f8c47eb0c6fcebab33ac58d2"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/disabled_ui.png",
+      "sha256": "96759fb9b99f85d274c888718ff102ef47f31bd17cf939ba813ffda556f0dd5f"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/hangout_selected.png",
+      "sha256": "45f3c6957edf48b258a2ea14c40669058594cf61e5c2ba9245157099b3336889"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/hangout_skip.png",
+      "sha256": "e608903df8c05595353ebc6c032525350e04d15bde4ea098c2cd31a844383829"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/hangout_unselected.png",
+      "sha256": "a6654128e1167b3ebd7ba638eee633359f1cbc2f65de22973b3f285f13d04daf"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/icon_daily_reward.png",
+      "sha256": "42d123059d001a72949f74394eb2d6a9f1da30b2ab79fd801fcc2dc99c187860"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/icon_exclamation.png",
+      "sha256": "b0bdebda7e020e1150a6e3ae870b320c30b948f7cc6cb39b155bb8237994d6be"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/icon_explore.png",
+      "sha256": "e79a28f80d0cd1b5da55c0ad36c2bcb59036dedafa474a42800a5c2453cd585d"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/icon_option.png",
+      "sha256": "b4f03c5641447fc30f2a3a92ab189e0fbc55444985c9baeedd68d3d506e68505"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/page_close_main.png",
+      "sha256": "4ca6151c1df55396261b52a6037978240c45c54196ba2d8a5ca0674a60d05e48"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/page_close.png",
+      "sha256": "78c68dd0bd17a43c6e1dab48d6c1ebbf4957c8c64bdcb9682cfb6f3e50e5fec8"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/primogem.png",
+      "sha256": "85b3221a4a35365b018659ddee39ae44e22f8b4a2e49a8ab22c5f5b844b7d8ac"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/re.png",
+      "sha256": "1a8870b5cb6b210cb3e9ae80bf79dee73a1d5febfadb2b9bafeb7a588b8f7c0e"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/stop_auto.png",
+      "sha256": "b254dba8a2fa29b910976a2cab030cc78cbfea797647bea949baae0a70ebcc33"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/submit_goods.png",
+      "sha256": "ad293722323dfd6df48c1cf3c459dcfe9d1d3ef90698ea2e3f2d464cfac48494"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/AutoSkip/1920x1080/submit_icon_exclamation.png",
+      "sha256": "8438251319f492ea663b88241485f1ce4cb1a0ed4017781c4d919b0248ba546b"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Model/Vad/LICENSE",
+      "sha256": "840a2b8a9e6091a4edc7531318b9392b1d57dd9a587c83ca3f022731c0b0e858"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Model/Vad/README.md",
+      "sha256": "3792d8803e6c91760dbb05bbe7d281175d7eb2b4c8c77c7866d00251ae7bf249"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Model/Vad/silero_vad.onnx",
+      "sha256": "1a153a22f4509e292a94e67d6f9b85e8deb25b4988682b7e174c65279d8788e3"
+    },
+    {
+      "path": "src/AkashaAutomation.BetterGiPort/Assets/Config/Skip/hangout.json",
+      "sha256": "316598f1b51cd63e8add1cebce5bb2f7580b585839ef8a6e8608b39c6b3e40f3"
+    }
+  ]
+}
