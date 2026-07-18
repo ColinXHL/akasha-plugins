@@ -3,6 +3,16 @@
   "commit": "025627200a26a41f8dff742187ebcd52d856ee69",
   "plugins": [
     {
+      "id": "akasha-genshin-automation",
+      "path": "plugins/akasha-genshin-automation",
+      "name": "Akasha 原神自动化",
+      "version": "0.4.3",
+      "description": "由 AkashaNavigator 安全托管的进程外原神自动化组件",
+      "distributionType": "release",
+      "hasBackend": true,
+      "minHostVersion": "1.4.0"
+    },
+    {
       "id": "bilibili-page-list",
       "path": "plugins/bilibili-page-list",
       "name": "B站分P列表",
