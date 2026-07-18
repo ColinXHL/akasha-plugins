@@ -1,0 +1,42 @@
+{
+  "manifestVersion": 2,
+  "id": "smart-cursor-detection",
+  "name": "智能鼠标检测",
+  "version": "1.0.0",
+  "description": "检测游戏内鼠标状态，自动切换播放器点击穿透模式",
+  "authors": [
+    {
+      "name": "AkashaNavigator",
+      "url": "https://github.com/ColinXHL"
+    }
+  ],
+  "homepage": "https://github.com/ColinXHL/akasha-plugins/tree/main/plugins/smart-cursor-detection",
+  "host": {
+    "minVersion": "1.4.0"
+  },
+  "main": "main.js",
+  "settings": "settings_ui.json",
+  "permissions": [
+    "window",
+    "events"
+  ],
+  "profiles": [],
+  "tags": [
+    "鼠标检测",
+    "点击穿透",
+    "窗口"
+  ],
+  "savedFiles": [
+    "config.json"
+  ],
+  "library": [],
+  "httpAllowedUrls": [],
+  "defaultConfig": {
+    "processWhitelist": "",
+    "minOpacity": 0.2,
+    "intervalMs": 200
+  },
+  "distribution": {
+    "type": "repository"
+  }
+}

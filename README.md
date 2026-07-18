@@ -18,9 +18,17 @@ AkashaNavigator 的官方插件聚合仓库。
 `repo.json` 不允许手工维护。只有通过清单校验、测试、构建、Release
 发布和产物回读验证的插件版本才能进入 `catalog`。
 
-## 当前阶段
+## 当前插件
 
-Phase 0 冻结以下公共契约：
+- `bilibili-page-list`
+- `genshin-direction-marker`
+- `smart-cursor-detection`
+
+每个插件目录均以 Manifest v2 声明稳定 ID、权限、入口、默认配置和更新时保留文件。
+
+## 公共契约
+
+仓库冻结并执行以下公共契约：
 
 - [Manifest v2](docs/contracts/manifest-v2.md)
 - [`repo.json` schema v1](docs/contracts/repository-index-v1.md)

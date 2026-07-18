@@ -31,7 +31,7 @@ repository_tool = load_repository_tool()
 
 
 class RepositoryToolTests(unittest.TestCase):
-    def test_empty_repository_generates_stable_index(self) -> None:
+    def test_repository_generates_stable_sorted_index(self) -> None:
         records = repository_tool.discover_plugins(
             ROOT,
             require_release_integrity=False,
@@ -40,7 +40,14 @@ class RepositoryToolTests(unittest.TestCase):
         second = repository_tool.build_index(records, "0" * 40)
 
         self.assertEqual(first, second)
-        self.assertEqual([], first["plugins"])
+        self.assertEqual(
+            [
+                "bilibili-page-list",
+                "genshin-direction-marker",
+                "smart-cursor-detection",
+            ],
+            [plugin["id"] for plugin in first["plugins"]],
+        )
 
     def test_stage_catalog_rejects_output_outside_repository(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

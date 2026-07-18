@@ -1,0 +1,51 @@
+{
+  "manifestVersion": 2,
+  "id": "genshin-direction-marker",
+  "name": "原神方向标记",
+  "version": "1.1.0",
+  "description": "识别攻略视频中的方位词，在小地图上显示方向标记",
+  "authors": [
+    {
+      "name": "ColinXHL",
+      "url": "https://github.com/ColinXHL"
+    }
+  ],
+  "homepage": "https://github.com/ColinXHL/akasha-plugins/tree/main/plugins/genshin-direction-marker",
+  "host": {
+    "minVersion": "1.4.0"
+  },
+  "main": "main.js",
+  "settings": "settings_ui.json",
+  "permissions": [
+    "subtitle",
+    "overlay"
+  ],
+  "profiles": [
+    "genshin"
+  ],
+  "tags": [
+    "原神",
+    "方向",
+    "字幕"
+  ],
+  "savedFiles": [
+    "config.json"
+  ],
+  "library": [],
+  "httpAllowedUrls": [],
+  "defaultConfig": {
+    "overlay": {
+      "x": 43,
+      "y": 43,
+      "size": 212
+    },
+    "marker": {
+      "size": 32,
+      "image": "assets/right.png"
+    },
+    "markerDuration": 0
+  },
+  "distribution": {
+    "type": "repository"
+  }
+}
