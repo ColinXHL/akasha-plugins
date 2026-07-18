@@ -1,0 +1,57 @@
+{
+  "manifestVersion": 2,
+  "id": "bilibili-page-list",
+  "name": "B站分P列表",
+  "version": "1.2.1",
+  "description": "显示B站视频分P列表独立窗口，支持快速切换分P（快捷键/按钮）",
+  "authors": [
+    {
+      "name": "AkashaNavigator",
+      "url": "https://github.com/ColinXHL"
+    }
+  ],
+  "homepage": "https://github.com/ColinXHL/akasha-plugins/tree/main/plugins/bilibili-page-list",
+  "host": {
+    "minVersion": "1.4.0"
+  },
+  "main": "main.js",
+  "settings": "settings_ui.json",
+  "permissions": [
+    "panel",
+    "network",
+    "player",
+    "events",
+    "hotkey",
+    "subtitle"
+  ],
+  "profiles": [],
+  "tags": [
+    "Bilibili",
+    "分P",
+    "播放器"
+  ],
+  "savedFiles": [
+    "config.json"
+  ],
+  "library": [],
+  "httpAllowedUrls": [
+    "https://api.bilibili.com/*"
+  ],
+  "defaultConfig": {
+    "toggleHotkey": "Alt+P",
+    "danmakuHotkey": "Alt+D",
+    "subtitleHotkey": "Alt+S",
+    "prevPageHotkey": "Alt+Left",
+    "nextPageHotkey": "Alt+Right",
+    "panel": {
+      "x": 100,
+      "y": 100,
+      "width": 320,
+      "height": 400,
+      "topmost": true
+    }
+  },
+  "distribution": {
+    "type": "repository"
+  }
+}
