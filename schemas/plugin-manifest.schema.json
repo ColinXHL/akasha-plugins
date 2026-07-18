@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ColinXHL/akasha-plugins/schemas/plugin-manifest.schema.json",
+  "title": "Akasha Plugin Manifest v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifestVersion",
+    "id",
+    "name",
+    "version",
+    "description",
+    "authors",
+    "host",
+    "main",
+    "permissions",
+    "savedFiles",
+    "distribution"
+  ],
+  "properties": {
+    "manifestVersion": {
+      "const": 2
+    },
+    "id": {
+      "$ref": "#/$defs/pluginId"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "version": {
+      "$ref": "#/$defs/semver"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "authors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://"
+          }
+        }
+      }
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://"
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minVersion"
+      ],
+      "properties": {
+        "minVersion": {
+          "$ref": "#/$defs/semver"
+        }
+      }
+    },
+    "main": {
+      "$ref": "#/$defs/relativeFile"
+    },
+    "settings": {
+      "$ref": "#/$defs/relativeFile"
+    },
+    "permissions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "audio",
+          "overlay",
+          "subtitle",
+          "player",
+          "window",
+          "storage",
+          "network",
+          "events",
+          "hotkey",
+          "panel",
+          "companion"
+        ]
+      }
+    },
+    "profiles": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/pluginId"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 30
+      }
+    },
+    "savedFiles": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/relativeSavedPath"
+      }
+    },
+    "library": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/relativeDirectory"
+      }
+    },
+    "httpAllowedUrls": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048,
+        "pattern": "^https://"
+      }
+    },
+    "defaultConfig": {
+      "type": "object"
+    },
+    "distribution": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "const": "repository"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "tag",
+            "asset"
+          ],
+          "properties": {
+            "type": {
+              "const": "release"
+            },
+            "tag": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "asset": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._-]+\\.zip$",
+              "maxLength": 240
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      ]
+    },
+    "backend": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "entry",
+        "protocolVersion",
+        "lifetime",
+        "integrityLevel",
+        "shutdownTimeoutMs"
+      ],
+      "properties": {
+        "type": {
+          "const": "companion-process"
+        },
+        "entry": {
+          "$ref": "#/$defs/relativeExe"
+        },
+        "protocolVersion": {
+          "const": 1
+        },
+        "lifetime": {
+          "const": "plugin"
+        },
+        "integrityLevel": {
+          "const": "inherit"
+        },
+        "shutdownTimeoutMs": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 30000
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "backend"
+        ]
+      },
+      "then": {
+        "properties": {
+          "permissions": {
+            "contains": {
+              "const": "companion"
+            }
+          },
+          "distribution": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "release"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "permissions": {
+            "contains": {
+              "const": "companion"
+            }
+          }
+        },
+        "required": [
+          "permissions"
+        ]
+      },
+      "then": {
+        "required": [
+          "backend"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "pluginId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$"
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "relativeFile": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+    },
+    "relativeExe": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 240,
+      "pattern": "^(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*\\.[Ee][Xx][Ee]$"
+    },
+    "relativeDirectory": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*/?$"
+    },
+    "relativeSavedPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*/?$"
+    }
+  }
+}

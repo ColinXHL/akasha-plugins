@@ -1,0 +1,31 @@
+{
+  "manifestVersion": 2,
+  "id": "invalid-backend",
+  "name": "Invalid Backend",
+  "version": "1.0.0",
+  "description": "Backend plugins cannot use repository distribution.",
+  "authors": [
+    {
+      "name": "Contract Test"
+    }
+  ],
+  "host": {
+    "minVersion": "1.4.0"
+  },
+  "main": "main.js",
+  "permissions": [
+    "companion"
+  ],
+  "savedFiles": [],
+  "distribution": {
+    "type": "repository"
+  },
+  "backend": {
+    "type": "companion-process",
+    "entry": "runtime/Worker.exe",
+    "protocolVersion": 1,
+    "lifetime": "plugin",
+    "integrityLevel": "inherit",
+    "shutdownTimeoutMs": 5000
+  }
+}

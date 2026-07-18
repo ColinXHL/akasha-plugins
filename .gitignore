@@ -1,0 +1,29 @@
+# Build outputs
+bin/
+obj/
+dist/
+artifacts/
+publish/
+
+# Release packages and compiled workers
+*.zip
+*.zip.sha256
+*.exe
+*.dll
+*.pdb
+
+# Local tooling
+.idea/
+.vs/
+.vscode/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local models and logs
+models/
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db
