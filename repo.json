@@ -6,7 +6,7 @@
       "id": "akasha-genshin-automation",
       "path": "plugins/akasha-genshin-automation",
       "name": "Akasha 原神自动化",
-      "version": "0.4.3",
+      "version": "0.4.4",
       "description": "由 AkashaNavigator 安全托管的进程外原神自动化组件",
       "distributionType": "release",
       "hasBackend": true,
