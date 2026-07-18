@@ -53,6 +53,14 @@ public sealed class ReleaseWorkflowContractTests
             workflow,
             StringComparison.Ordinal);
         Assert.Contains(
+            "\"plugins/akasha-genshin-automation/backend/src/**\"",
+            workflow,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "\"plugins/akasha-genshin-automation/THIRD_PARTY_NOTICES.md\"",
+            workflow,
+            StringComparison.Ordinal);
+        Assert.Contains(
             "Publish verified automation catalog",
             workflow,
             StringComparison.Ordinal);
