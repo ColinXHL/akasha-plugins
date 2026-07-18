@@ -1,0 +1,179 @@
+name: Sync BetterGI Pickup Blacklist
+
+on:
+  workflow_call:
+    secrets:
+      QINIU_ACCESS_KEY:
+        required: true
+      QINIU_SECRET_KEY:
+        required: true
+      QINIU_BUCKET:
+        required: true
+      QINIU_NOTICE_KEY:
+        required: true
+      QINIU_NOTICE_URL:
+        required: true
+      QINIU_PLUGIN_RESOURCE_PREFIX:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: Verify and publish pickup blacklist
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Test synchronization script
+        run: python -m unittest discover -s tests/scripts -p "test_*.py"
+
+      - name: Check BetterGI release and prepare files
+        id: prepare
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          QINIU_NOTICE_URL: ${{ secrets.QINIU_NOTICE_URL }}
+          QINIU_PLUGIN_RESOURCE_PREFIX: ${{ secrets.QINIU_PLUGIN_RESOURCE_PREFIX }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:QINIU_PLUGIN_RESOURCE_PREFIX)) {
+              throw "QINIU_PLUGIN_RESOURCE_PREFIX is not configured"
+          }
+          python .github/scripts/sync_bettergi_blacklist.py `
+            --notice-url "$env:QINIU_NOTICE_URL" `
+            --resource-prefix "$env:QINIU_PLUGIN_RESOURCE_PREFIX" `
+            --output-dir "out/bettergi-sync"
+
+      - name: Download qshell
+        if: steps.prepare.outputs.changed == 'true'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest `
+            -Uri "https://github.com/qiniu/qshell/releases/download/v2.18.0/qshell-v2.18.0-windows-amd64.zip" `
+            -OutFile "qshell.zip"
+          Expand-Archive -Path "qshell.zip" -DestinationPath ".\qshell_bin" -Force
+
+      - name: Configure qshell account
+        if: steps.prepare.outputs.changed == 'true'
+        shell: pwsh
+        env:
+          QINIU_ACCESS_KEY: ${{ secrets.QINIU_ACCESS_KEY }}
+          QINIU_SECRET_KEY: ${{ secrets.QINIU_SECRET_KEY }}
+        run: |
+          $qshell = (Get-ChildItem .\qshell_bin -Recurse -Filter qshell*.exe |
+            Select-Object -First 1).FullName
+          & $qshell account `
+            $env:QINIU_ACCESS_KEY `
+            $env:QINIU_SECRET_KEY `
+            github-actions-bettergi-sync
+
+      - name: Upload versioned blacklist
+        if: steps.prepare.outputs.resource_changed == 'true'
+        shell: pwsh
+        env:
+          QINIU_BUCKET: ${{ secrets.QINIU_BUCKET }}
+          RESOURCE_KEY: ${{ steps.prepare.outputs.resource_key }}
+          RESOURCE_FILE: ${{ steps.prepare.outputs.resource_file }}
+        run: |
+          $qshell = (Get-ChildItem .\qshell_bin -Recurse -Filter qshell*.exe |
+            Select-Object -First 1).FullName
+          & $qshell fput `
+            $env:QINIU_BUCKET `
+            $env:RESOURCE_KEY `
+            $env:RESOURCE_FILE `
+            --overwrite
+
+      - name: Verify publicly downloaded blacklist
+        if: steps.prepare.outputs.resource_changed == 'true'
+        shell: pwsh
+        env:
+          RESOURCE_URL: ${{ steps.prepare.outputs.resource_url }}
+          RESOURCE_SHA256: ${{ steps.prepare.outputs.resource_sha256 }}
+        run: |
+          $verified = $false
+          for ($attempt = 1; $attempt -le 6; $attempt++) {
+              try {
+                  Invoke-WebRequest -Uri $env:RESOURCE_URL -OutFile "out/resource-readback.json"
+                  $actual = (Get-FileHash "out/resource-readback.json" -Algorithm SHA256).Hash.ToLowerInvariant()
+                  if ($actual -eq $env:RESOURCE_SHA256) {
+                      $verified = $true
+                      break
+                  }
+              }
+              catch {
+                  Write-Host "Resource readback attempt $attempt failed: $($_.Exception.Message)"
+              }
+              Start-Sleep -Seconds 5
+          }
+          if (-not $verified) {
+              throw "Public blacklist SHA-256 did not match after upload"
+          }
+
+      - name: Upload notice after resource verification
+        if: steps.prepare.outputs.changed == 'true'
+        shell: pwsh
+        env:
+          QINIU_BUCKET: ${{ secrets.QINIU_BUCKET }}
+          QINIU_NOTICE_KEY: ${{ secrets.QINIU_NOTICE_KEY }}
+          NOTICE_FILE: ${{ steps.prepare.outputs.notice_file }}
+        run: |
+          $qshell = (Get-ChildItem .\qshell_bin -Recurse -Filter qshell*.exe |
+            Select-Object -First 1).FullName
+          & $qshell fput `
+            $env:QINIU_BUCKET `
+            $env:QINIU_NOTICE_KEY `
+            $env:NOTICE_FILE `
+            --overwrite
+
+      - name: Refresh notice CDN cache
+        if: steps.prepare.outputs.changed == 'true'
+        shell: pwsh
+        env:
+          QINIU_NOTICE_URL: ${{ secrets.QINIU_NOTICE_URL }}
+        run: |
+          $qshell = (Get-ChildItem .\qshell_bin -Recurse -Filter qshell*.exe |
+            Select-Object -First 1).FullName
+          $env:QINIU_NOTICE_URL | & $qshell cdnrefresh
+
+      - name: Verify notice ETag and resource metadata
+        if: steps.prepare.outputs.changed == 'true'
+        shell: pwsh
+        env:
+          QINIU_NOTICE_URL: ${{ secrets.QINIU_NOTICE_URL }}
+          OLD_ETAG: ${{ steps.prepare.outputs.old_etag }}
+          RELEASE_VERSION: ${{ steps.prepare.outputs.release_version }}
+          RESOURCE_SHA256: ${{ steps.prepare.outputs.resource_sha256 }}
+        run: |
+          $verified = $false
+          for ($attempt = 1; $attempt -le 12; $attempt++) {
+              $response = Invoke-WebRequest `
+                -Uri $env:QINIU_NOTICE_URL `
+                -Headers @{ "Cache-Control" = "no-cache" }
+              $etag = [string]$response.Headers.ETag
+              $notice = $response.Content | ConvertFrom-Json
+              $resource = $notice.plugins.'akasha-genshin-automation'.resources.pickBlacklist
+              if ($etag -ne $env:OLD_ETAG -and
+                  [string]$resource.upstreamRelease -eq $env:RELEASE_VERSION -and
+                  [string]$resource.sha256 -eq $env:RESOURCE_SHA256) {
+                  $verified = $true
+                  break
+              }
+              Start-Sleep -Seconds 5
+          }
+          if (-not $verified) {
+              throw "Public notice did not expose the new ETag and resource metadata"
+          }
+
+      - uses: actions/upload-artifact@v6
+        if: steps.prepare.outputs.changed == 'true'
+        with:
+          name: bettergi-pick-blacklist-${{ steps.prepare.outputs.release_version }}
+          path: |
+            out/bettergi-sync/*.json
+          if-no-files-found: error
+          retention-days: 14

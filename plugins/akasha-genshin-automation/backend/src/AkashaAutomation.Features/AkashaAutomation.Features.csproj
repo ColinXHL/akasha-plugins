@@ -1,0 +1,8 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\AkashaAutomation.Core\AkashaAutomation.Core.csproj" />
+    <ProjectReference Include="..\AkashaAutomation.BetterGiPort\AkashaAutomation.BetterGiPort.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -66,6 +66,44 @@ class MigratedPluginTests(unittest.TestCase):
                 for relative_path in expected["files"]:
                     self.assertTrue((plugin / relative_path).is_file())
 
+    def test_automation_migration_preserves_version_and_unified_layout(
+        self,
+    ) -> None:
+        plugin = ROOT / "plugins" / "akasha-genshin-automation"
+        manifest = json.loads(
+            (plugin / "manifest.json").read_text(encoding="utf-8")
+        )
+
+        self.assertEqual(
+            "akasha-genshin-automation",
+            manifest["id"],
+        )
+        self.assertEqual("0.4.3", manifest["version"])
+        self.assertEqual(
+            {"companion", "hotkey"},
+            set(manifest["permissions"]),
+        )
+        self.assertEqual("release", manifest["distribution"]["type"])
+        self.assertNotIn("sha256", manifest["distribution"])
+        self.assertNotIn("size", manifest["distribution"])
+        self.assertEqual(
+            "runtime/AkashaAutomation.Worker.exe",
+            manifest["backend"]["entry"],
+        )
+        for relative_path in (
+            "frontend/main.js",
+            "frontend/settings_ui.json",
+            "backend/AkashaAutomation.sln",
+            "backend/src/AkashaAutomation.Worker/"
+            "AkashaAutomation.Worker.csproj",
+            "backend/tests/AkashaAutomation.Worker.IntegrationTests/"
+            "AkashaAutomation.Worker.IntegrationTests.csproj",
+            "packaging/Publish-Plugin.ps1",
+            "DERIVATION.md",
+            "THIRD_PARTY_NOTICES.md",
+        ):
+            self.assertTrue((plugin / relative_path).exists())
+
 
 if __name__ == "__main__":
     unittest.main()

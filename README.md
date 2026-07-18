@@ -20,11 +20,14 @@ AkashaNavigator 的官方插件聚合仓库。
 
 ## 当前插件
 
+- `akasha-genshin-automation`（Release 分发，包含 companion Worker）
 - `bilibili-page-list`
 - `genshin-direction-marker`
 - `smart-cursor-detection`
 
 每个插件目录均以 Manifest v2 声明稳定 ID、权限、入口、默认配置和更新时保留文件。
+插件可在自己的目录声明额外许可证；`akasha-genshin-automation` 的 BetterGI
+派生部分及分发包遵循其目录中的 GPL-3.0 与第三方许可说明。
 
 ## 公共契约
 
@@ -40,4 +43,12 @@ AkashaNavigator 的官方插件聚合仓库。
 ```powershell
 python -m pip install -r requirements-dev.txt
 python tests/validate_contracts.py
+python -m unittest discover -s tests -p "test_*.py" -v
+dotnet test plugins/akasha-genshin-automation/backend/AkashaAutomation.sln -c Release
+```
+
+构建并验证自动化插件 Release ZIP：
+
+```powershell
+./plugins/akasha-genshin-automation/packaging/Publish-Plugin.ps1
 ```

@@ -1,0 +1,184 @@
+{
+  "sections": [
+    {
+      "title": "功能开关",
+      "items": [
+        {
+          "type": "checkbox",
+          "key": "autoPickEnabled",
+          "label": "自动拾取",
+          "default": false
+        },
+        {
+          "type": "checkbox",
+          "key": "autoDialogueEnabled",
+          "label": "自动剧情",
+          "default": false
+        }
+      ]
+    },
+    {
+      "title": "快捷键",
+      "items": [
+        {
+          "type": "hotkey",
+          "key": "autoPickHotkey",
+          "label": "切换自动拾取",
+          "default": "F9"
+        },
+        {
+          "type": "hotkey",
+          "key": "autoDialogueHotkey",
+          "label": "切换自动剧情",
+          "default": "F12"
+        }
+      ]
+    },
+    {
+      "title": "详细设置",
+      "items": [
+        {
+          "type": "group",
+          "label": "自动拾取",
+          "items": [
+            {
+              "type": "select",
+              "key": "pickKey",
+              "label": "交互／拾取按键",
+              "default": "F",
+              "options": [
+                { "value": "F", "label": "F（默认）" },
+                { "value": "E", "label": "E" },
+                { "value": "G", "label": "G" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": "拾取名单规则",
+          "items": [
+            {
+              "type": "checkbox",
+              "key": "blackListEnabled",
+              "label": "启用默认拾取黑名单",
+              "default": true
+            },
+            {
+              "type": "button",
+              "label": "打开默认黑名单文件夹",
+              "action": "openPluginFolder",
+              "relativePath": "runtime/Assets/Config/Pick"
+            },
+            {
+              "type": "textarea",
+              "key": "userWhitelist",
+              "label": "对话与机关白名单",
+              "description": "每行一个完整名称；名单非空时自动启用，并优先于图标排除和黑名单规则。",
+              "placeholder": "与凯瑟琳对话\n启动机关",
+              "default": ""
+            },
+            {
+              "type": "textarea",
+              "key": "userExactBlacklist",
+              "label": "额外精确黑名单",
+              "description": "每行一个完整名称；仅在“启用默认拾取黑名单”开启时参与判断。",
+              "placeholder": "烹饪\n调查",
+              "default": ""
+            },
+            {
+              "type": "textarea",
+              "key": "userFuzzyBlacklist",
+              "label": "额外模糊黑名单",
+              "description": "每行一个关键词；物品名称包含任一关键词时跳过拾取。",
+              "placeholder": "声望\n聚所",
+              "default": ""
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": "自动剧情",
+          "items": [
+            {
+              "type": "select",
+              "key": "optionStrategy",
+              "label": "剧情选项选择方式",
+              "default": "First",
+              "options": [
+                { "value": "First", "label": "优先选择第一个选项" },
+                { "value": "Last", "label": "优先选择最后一个选项" },
+                { "value": "Random", "label": "随机选择选项" },
+                { "value": "None", "label": "不自动选择选项" }
+              ]
+            },
+            {
+              "type": "checkbox",
+              "key": "quicklyAdvanceEnabled",
+              "label": "快速推进普通对话",
+              "default": true
+            },
+            {
+              "type": "select",
+              "key": "advanceKey",
+              "label": "普通对话推进按键",
+              "default": "Space",
+              "options": [
+                { "value": "Space", "label": "空格（默认）" },
+                { "value": "Interaction", "label": "使用上方交互按键" }
+              ]
+            },
+            {
+              "type": "number",
+              "key": "beforeAdvanceDelayMilliseconds",
+              "label": "推进对话前延迟（毫秒）",
+              "default": 0,
+              "min": 0,
+              "max": 5000,
+              "step": 100
+            },
+            {
+              "type": "number",
+              "key": "afterOptionDelayMilliseconds",
+              "label": "选择剧情选项前延迟（毫秒）",
+              "default": 0,
+              "min": 0,
+              "max": 5000,
+              "step": 100
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": "剧情辅助",
+          "items": [
+            {
+              "type": "checkbox",
+              "key": "closePopupPagesEnabled",
+              "label": "自动关闭剧情弹出页",
+              "default": true
+            },
+            {
+              "type": "checkbox",
+              "key": "submitGoodsEnabled",
+              "label": "自动提交剧情物品",
+              "default": true
+            },
+            {
+              "type": "checkbox",
+              "key": "autoGetDailyRewardsEnabled",
+              "label": "自动领取每日委托奖励",
+              "default": true
+            },
+            {
+              "type": "checkbox",
+              "key": "autoReExploreEnabled",
+              "label": "自动重新派遣",
+              "default": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

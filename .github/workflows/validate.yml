@@ -35,3 +35,21 @@ jobs:
 
       - name: Test repository tooling
         run: python -m unittest discover -s tests -p "test_*.py" -v
+
+  automation:
+    name: Test automation backend
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Test automation solution
+        shell: pwsh
+        run: >-
+          dotnet test
+          plugins/akasha-genshin-automation/backend/AkashaAutomation.sln
+          --configuration Release
+          --nologo

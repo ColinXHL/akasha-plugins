@@ -1,0 +1,70 @@
+{
+  "manifestVersion": 2,
+  "id": "akasha-genshin-automation",
+  "name": "Akasha 原神自动化",
+  "version": "0.4.3",
+  "description": "由 AkashaNavigator 安全托管的进程外原神自动化组件",
+  "authors": [
+    {
+      "name": "Akasha Automation Contributors",
+      "url": "https://github.com/ColinXHL/akasha-plugins"
+    }
+  ],
+  "homepage": "https://github.com/ColinXHL/akasha-plugins/tree/main/plugins/akasha-genshin-automation",
+  "host": {
+    "minVersion": "1.4.0"
+  },
+  "main": "frontend/main.js",
+  "settings": "frontend/settings_ui.json",
+  "permissions": [
+    "companion",
+    "hotkey"
+  ],
+  "profiles": [
+    "genshin"
+  ],
+  "tags": [
+    "原神",
+    "自动拾取",
+    "自动剧情"
+  ],
+  "savedFiles": [
+    "config.json",
+    "data/"
+  ],
+  "library": [],
+  "httpAllowedUrls": [],
+  "defaultConfig": {
+    "autoPickEnabled": false,
+    "autoDialogueEnabled": false,
+    "autoPickHotkey": "F9",
+    "autoDialogueHotkey": "F12",
+    "pickKey": "F",
+    "blackListEnabled": true,
+    "userExactBlacklist": "",
+    "userFuzzyBlacklist": "",
+    "userWhitelist": "",
+    "optionStrategy": "First",
+    "quicklyAdvanceEnabled": true,
+    "advanceKey": "Space",
+    "beforeAdvanceDelayMilliseconds": 0,
+    "afterOptionDelayMilliseconds": 0,
+    "closePopupPagesEnabled": true,
+    "submitGoodsEnabled": true,
+    "autoGetDailyRewardsEnabled": true,
+    "autoReExploreEnabled": true
+  },
+  "distribution": {
+    "type": "release",
+    "tag": "akasha-genshin-automation-v0.4.3",
+    "asset": "akasha-genshin-automation-0.4.3-win-x64.zip"
+  },
+  "backend": {
+    "type": "companion-process",
+    "entry": "runtime/AkashaAutomation.Worker.exe",
+    "protocolVersion": 1,
+    "lifetime": "plugin",
+    "integrityLevel": "inherit",
+    "shutdownTimeoutMs": 5000
+  }
+}
