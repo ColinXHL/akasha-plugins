@@ -37,6 +37,22 @@ public sealed class ReleaseWorkflowContractTests
             workflow,
             StringComparison.Ordinal);
         Assert.Contains(
+            "resume_existing_release",
+            workflow,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "--repo \"$GITHUB_REPOSITORY\"",
+            workflow,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "checksum_sha256",
+            workflow,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "needs.github_release.outputs.verified_sha256",
+            workflow,
+            StringComparison.Ordinal);
+        Assert.Contains(
             "Publish verified automation catalog",
             workflow,
             StringComparison.Ordinal);
