@@ -1,2 +1,5 @@
 * text=auto eol=lf
 *.png binary
+
+# BetterGI runtime assets are pinned byte-for-byte to upstream hashes.
+plugins/akasha-genshin-automation/backend/src/AkashaAutomation.BetterGiPort/Assets/** binary
