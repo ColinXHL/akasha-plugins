@@ -1,5 +1,36 @@
 {
   "schemaVersion": 1,
-  "commit": "c2239f4b60b16cc4835120521ae73a37ba117864",
-  "plugins": []
+  "commit": "c5879195593c874cb19e2aa24148ec0b17fd341d",
+  "plugins": [
+    {
+      "id": "bilibili-page-list",
+      "path": "plugins/bilibili-page-list",
+      "name": "B站分P列表",
+      "version": "1.2.1",
+      "description": "显示B站视频分P列表独立窗口，支持快速切换分P（快捷键/按钮）",
+      "distributionType": "repository",
+      "hasBackend": false,
+      "minHostVersion": "1.4.0"
+    },
+    {
+      "id": "genshin-direction-marker",
+      "path": "plugins/genshin-direction-marker",
+      "name": "原神方向标记",
+      "version": "1.1.0",
+      "description": "识别攻略视频中的方位词，在小地图上显示方向标记",
+      "distributionType": "repository",
+      "hasBackend": false,
+      "minHostVersion": "1.4.0"
+    },
+    {
+      "id": "smart-cursor-detection",
+      "path": "plugins/smart-cursor-detection",
+      "name": "智能鼠标检测",
+      "version": "1.0.0",
+      "description": "检测游戏内鼠标状态，自动切换播放器点击穿透模式",
+      "distributionType": "repository",
+      "hasBackend": false,
+      "minHostVersion": "1.4.0"
+    }
+  ]
 }
