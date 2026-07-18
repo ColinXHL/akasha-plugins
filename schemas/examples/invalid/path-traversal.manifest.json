@@ -1,0 +1,21 @@
+{
+  "manifestVersion": 2,
+  "id": "invalid-path",
+  "name": "Invalid Path",
+  "version": "1.0.0",
+  "description": "Path traversal must be rejected.",
+  "authors": [
+    {
+      "name": "Contract Test"
+    }
+  ],
+  "host": {
+    "minVersion": "1.4.0"
+  },
+  "main": "../main.js",
+  "permissions": [],
+  "savedFiles": [],
+  "distribution": {
+    "type": "repository"
+  }
+}

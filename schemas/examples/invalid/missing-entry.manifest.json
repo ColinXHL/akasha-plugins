@@ -1,0 +1,20 @@
+{
+  "manifestVersion": 2,
+  "id": "missing-entry",
+  "name": "Missing Entry",
+  "version": "1.0.0",
+  "description": "The main field is required.",
+  "authors": [
+    {
+      "name": "Contract Test"
+    }
+  ],
+  "host": {
+    "minVersion": "1.4.0"
+  },
+  "permissions": [],
+  "savedFiles": [],
+  "distribution": {
+    "type": "repository"
+  }
+}

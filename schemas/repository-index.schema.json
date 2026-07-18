@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ColinXHL/akasha-plugins/schemas/repository-index.schema.json",
+  "title": "Akasha Plugin Repository Index v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "commit",
+    "plugins"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "plugins": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "path",
+          "name",
+          "version",
+          "description",
+          "distributionType",
+          "hasBackend",
+          "minHostVersion"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "plugin-manifest.schema.json#/$defs/pluginId"
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^plugins/[a-z0-9][a-z0-9._-]*$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "version": {
+            "$ref": "plugin-manifest.schema.json#/$defs/semver"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "distributionType": {
+            "enum": [
+              "repository",
+              "release"
+            ]
+          },
+          "hasBackend": {
+            "type": "boolean"
+          },
+          "minHostVersion": {
+            "$ref": "plugin-manifest.schema.json#/$defs/semver"
+          }
+        }
+      }
+    }
+  }
+}

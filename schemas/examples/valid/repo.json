@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "commit": "0123456789abcdef0123456789abcdef01234567",
+  "plugins": [
+    {
+      "id": "akasha-genshin-automation",
+      "path": "plugins/akasha-genshin-automation",
+      "name": "Akasha 原神自动化",
+      "version": "0.4.3",
+      "description": "由 AkashaNavigator 安全托管的进程外原神自动化组件",
+      "distributionType": "release",
+      "hasBackend": true,
+      "minHostVersion": "1.4.0"
+    },
+    {
+      "id": "genshin-direction-marker",
+      "path": "plugins/genshin-direction-marker",
+      "name": "原神方向标记",
+      "version": "1.1.0",
+      "description": "识别攻略视频中的方位词，在小地图上显示方向标记",
+      "distributionType": "repository",
+      "hasBackend": false,
+      "minHostVersion": "1.4.0"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "manifestVersion": 2,
+  "id": "unknown-permission",
+  "name": "Unknown Permission",
+  "version": "1.0.0",
+  "description": "Unknown permissions must be rejected.",
+  "authors": [
+    {
+      "name": "Contract Test"
+    }
+  ],
+  "host": {
+    "minVersion": "1.4.0"
+  },
+  "main": "main.js",
+  "permissions": [
+    "execute-anything"
+  ],
+  "savedFiles": [],
+  "distribution": {
+    "type": "repository"
+  }
+}

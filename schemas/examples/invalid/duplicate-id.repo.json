@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "commit": "0123456789abcdef0123456789abcdef01234567",
+  "plugins": [
+    {
+      "id": "duplicate",
+      "path": "plugins/duplicate",
+      "name": "Duplicate One",
+      "version": "1.0.0",
+      "description": "First duplicate.",
+      "distributionType": "repository",
+      "hasBackend": false,
+      "minHostVersion": "1.4.0"
+    },
+    {
+      "id": "duplicate",
+      "path": "plugins/duplicate",
+      "name": "Duplicate Two",
+      "version": "1.0.1",
+      "description": "Second duplicate.",
+      "distributionType": "repository",
+      "hasBackend": false,
+      "minHostVersion": "1.4.0"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "manifestVersion": 2,
+  "name": "Missing ID",
+  "version": "1.0.0",
+  "description": "The ID field is required.",
+  "authors": [
+    {
+      "name": "Contract Test"
+    }
+  ],
+  "host": {
+    "minVersion": "1.4.0"
+  },
+  "main": "main.js",
+  "permissions": [],
+  "savedFiles": [],
+  "distribution": {
+    "type": "repository"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "plugins": [
+    {
+      "id": "akasha-genshin-automation",
+      "name": "Akasha 原神自动化",
+      "baselineVersion": "0.4.3",
+      "sourceRepository": "https://github.com/ColinXHL/akasha-automation",
+      "sourcePath": "plugin/akasha-genshin-automation",
+      "targetPath": "plugins/akasha-genshin-automation",
+      "distributionType": "release"
+    },
+    {
+      "id": "bilibili-page-list",
+      "name": "B站分P列表",
+      "baselineVersion": "1.2.1",
+      "sourceRepository": "https://github.com/ColinXHL/AkashaNavigator",
+      "sourcePath": "repo/plugins/bilibili-page-list",
+      "targetPath": "plugins/bilibili-page-list",
+      "distributionType": "repository"
+    },
+    {
+      "id": "genshin-direction-marker",
+      "name": "原神方向标记",
+      "baselineVersion": "1.1.0",
+      "sourceRepository": "https://github.com/ColinXHL/AkashaNavigator",
+      "sourcePath": "repo/plugins/genshin-direction-marker",
+      "targetPath": "plugins/genshin-direction-marker",
+      "distributionType": "repository",
+      "legacyRegistryVersion": "2.0.0",
+      "legacyRegistryVersionAccepted": false
+    },
+    {
+      "id": "smart-cursor-detection",
+      "name": "智能鼠标检测",
+      "baselineVersion": "1.0.0",
+      "sourceRepository": "https://github.com/ColinXHL/AkashaNavigator",
+      "sourcePath": "repo/plugins/smart-cursor-detection",
+      "targetPath": "plugins/smart-cursor-detection",
+      "distributionType": "repository"
+    }
+  ]
+}

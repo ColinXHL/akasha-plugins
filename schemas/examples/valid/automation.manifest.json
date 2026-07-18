@@ -1,0 +1,45 @@
+{
+  "manifestVersion": 2,
+  "id": "akasha-genshin-automation",
+  "name": "Akasha 原神自动化",
+  "version": "0.4.3",
+  "description": "由 AkashaNavigator 安全托管的进程外原神自动化组件",
+  "authors": [
+    {
+      "name": "Akasha Automation Contributors",
+      "url": "https://github.com/ColinXHL/akasha-automation"
+    }
+  ],
+  "homepage": "https://github.com/ColinXHL/akasha-plugins",
+  "host": {
+    "minVersion": "1.4.0"
+  },
+  "main": "frontend/main.js",
+  "settings": "frontend/settings_ui.json",
+  "permissions": [
+    "companion",
+    "hotkey"
+  ],
+  "profiles": [
+    "genshin"
+  ],
+  "savedFiles": [
+    "config.json",
+    "data/"
+  ],
+  "distribution": {
+    "type": "release",
+    "tag": "akasha-genshin-automation-v0.4.3",
+    "asset": "akasha-genshin-automation-0.4.3-win-x64.zip",
+    "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "size": 123456
+  },
+  "backend": {
+    "type": "companion-process",
+    "entry": "runtime/AkashaAutomation.Worker.exe",
+    "protocolVersion": 1,
+    "lifetime": "plugin",
+    "integrityLevel": "inherit",
+    "shutdownTimeoutMs": 5000
+  }
+}
