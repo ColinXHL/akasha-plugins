@@ -66,7 +66,7 @@ class MigratedPluginTests(unittest.TestCase):
                 for relative_path in expected["files"]:
                     self.assertTrue((plugin / relative_path).is_file())
 
-    def test_automation_migration_preserves_version_and_unified_layout(
+    def test_automation_plugin_tracks_current_version_and_unified_layout(
         self,
     ) -> None:
         plugin = ROOT / "plugins" / "akasha-genshin-automation"
@@ -78,7 +78,7 @@ class MigratedPluginTests(unittest.TestCase):
             "akasha-genshin-automation",
             manifest["id"],
         )
-        self.assertEqual("0.4.3", manifest["version"])
+        self.assertEqual("0.4.4", manifest["version"])
         self.assertEqual(
             {"companion", "hotkey"},
             set(manifest["permissions"]),

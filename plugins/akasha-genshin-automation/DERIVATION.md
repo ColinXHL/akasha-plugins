@@ -49,12 +49,10 @@ Phase 4 translates the AutoPick behavior from BetterGI source commit `0eb90304c4
 - `BetterGiPort/Compatibility/AutoPick` translates BetterGI recognition assets, 1080p ROI constants and resolution scaling to Core capture/template contracts.
 - `Features/AutoPick` owns Akasha configuration, diagnostics and conversion of a successful decision to one `AutomationIntent`; it never calls `SendInput` directly.
 
-AkashaNavigator may provide a release-derived default pickup blacklist through
-`AKASHA_PLUGIN_DATA_DIR/pick-blacklist/current.json`. This versioned user-data file
-replaces, rather than merges with, the pinned packaged default so upstream removals
-take effect. Invalid or missing remote data falls back to the pinned asset, and
-user-configured exact blacklist entries continue to merge with whichever default is
-selected. The file is read when the Worker constructs AutoPick and is not hot-reloaded.
+The default pickup blacklist is the pinned asset included in each plugin Release.
+Updating it therefore requires the same reviewed source pin, test, package, Release,
+and catalog transaction as the Worker code. User-configured exact blacklist entries
+continue to merge with the packaged default.
 
 The live host uses BetterGI's default 50 ms dispatcher cadence and subtracts frame processing time before delaying. After BetterGI's text-rectangle refinement succeeds, AutoPick calls the recognition model directly without the detection model, matching BetterGI's `OcrWithoutDetector` fast path; multi-option AutoDialogue continues to use detection plus recognition.
 
