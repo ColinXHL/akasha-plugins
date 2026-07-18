@@ -7,17 +7,13 @@ namespace AkashaAutomation.Features.AutoPick;
 public sealed class AutoPickController : IAutoPickController
 {
     private readonly IAssetPathResolver _assetPathResolver;
-    private readonly string? _defaultBlacklistOverridePath;
     private readonly object _gate = new();
     private AutoPickConfiguration _configuration;
     private AutoPickRuntimeStatus _status;
 
-    public AutoPickController(
-        IAssetPathResolver assetPathResolver,
-        string? defaultBlacklistOverridePath = null)
+    public AutoPickController(IAssetPathResolver assetPathResolver)
     {
         _assetPathResolver = assetPathResolver;
-        _defaultBlacklistOverridePath = defaultBlacklistOverridePath;
         var options = NormalizeAndValidate(new AutoPickOptions());
         _configuration = CreateConfiguration(options);
         _status = new(options.Enabled, false, null, "not_evaluated", false, null, null);
@@ -106,8 +102,7 @@ public sealed class AutoPickController : IAutoPickController
                 _assetPathResolver,
                 options.UserExactBlacklist,
                 options.UserFuzzyBlacklist,
-                options.UserWhitelist,
-                _defaultBlacklistOverridePath));
+                options.UserWhitelist));
 
     private static AutoPickOptions NormalizeAndValidate(AutoPickOptions options)
     {

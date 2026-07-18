@@ -179,37 +179,6 @@ public sealed class AutoPickFeatureTests
     }
 
     [Fact]
-    public void Rules_RemoteDefaultBlacklist_ShouldReplacePackagedDefaultAndMergeUserEntries()
-    {
-        using var temporaryFile = new TemporaryJsonFile("[\"远程默认条目\"]");
-        var resolver = new RootedAssetPathResolver(AppContext.BaseDirectory);
-
-        var lists = BetterGiAutoPickRules.LoadLists(
-            resolver,
-            ["用户额外条目"],
-            defaultBlacklistOverridePath: temporaryFile.Path);
-
-        Assert.Contains("远程默认条目", lists.ExactBlacklist);
-        Assert.Contains("用户额外条目", lists.ExactBlacklist);
-        Assert.DoesNotContain("烹饪", lists.ExactBlacklist);
-    }
-
-    [Theory]
-    [InlineData("{ not-json")]
-    [InlineData("[1, 2]")]
-    public void Rules_InvalidRemoteDefaultBlacklist_ShouldUsePackagedDefault(string content)
-    {
-        using var temporaryFile = new TemporaryJsonFile(content);
-        var resolver = new RootedAssetPathResolver(AppContext.BaseDirectory);
-
-        var lists = BetterGiAutoPickRules.LoadLists(
-            resolver,
-            defaultBlacklistOverridePath: temporaryFile.Path);
-
-        Assert.Contains("烹饪", lists.ExactBlacklist);
-    }
-
-    [Fact]
     public void OcrCleanup_ShouldNormalizeWhitespaceBracketsAndNoise()
     {
         Assert.Equal("「珍贵宝箱」", BetterGiAutoPickRules.ProcessOcrText("  123[珍贵 宝箱]abc\r\n"));
@@ -394,23 +363,6 @@ public sealed class AutoPickFeatureTests
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
-    private sealed class TemporaryJsonFile : IDisposable
-    {
-        public TemporaryJsonFile(string content)
-        {
-            Path = System.IO.Path.Combine(
-                System.IO.Path.GetTempPath(),
-                $"akasha-pick-blacklist-{Guid.NewGuid():N}.json");
-            File.WriteAllText(Path, content);
-        }
-
-        public string Path { get; }
-
-        public void Dispose()
-        {
-            File.Delete(Path);
-        }
-    }
 
     private sealed class StaticGameContextProvider(GameContextSnapshot snapshot) : IGameContextProvider
     {

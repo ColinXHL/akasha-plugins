@@ -17,43 +17,19 @@ public static class BetterGiAutoPickRules
         IAssetPathResolver assetPathResolver,
         IEnumerable<string>? userExactBlacklist = null,
         IEnumerable<string>? userFuzzyBlacklist = null,
-        IEnumerable<string>? userWhitelist = null,
-        string? defaultBlacklistOverridePath = null)
+        IEnumerable<string>? userWhitelist = null)
     {
         ArgumentNullException.ThrowIfNull(assetPathResolver);
-        var exactBlacklist = LoadDefaultBlacklist(
-                assetPathResolver,
-                defaultBlacklistOverridePath)
+        var exactBlacklist = BetterGiJsonList
+            .Load(
+                assetPathResolver.Resolve(
+                    BetterGiAssetPaths.DefaultPickBlacklist))
             .ToHashSet(StringComparer.Ordinal);
         exactBlacklist.UnionWith(NonEmpty(userExactBlacklist));
         return new BetterGiAutoPickLists(
             exactBlacklist,
             NonEmpty(userFuzzyBlacklist).ToArray(),
             NonEmpty(userWhitelist).ToHashSet(StringComparer.Ordinal));
-    }
-
-    private static IReadOnlyList<string> LoadDefaultBlacklist(
-        IAssetPathResolver assetPathResolver,
-        string? overridePath)
-    {
-        if (!string.IsNullOrWhiteSpace(overridePath) && File.Exists(overridePath))
-        {
-            try
-            {
-                return BetterGiJsonList
-                    .Load(overridePath)
-                    .Where(value => !string.IsNullOrWhiteSpace(value))
-                    .ToArray();
-            }
-            catch (Exception ex) when (
-                ex is IOException or UnauthorizedAccessException or InvalidDataException or System.Text.Json.JsonException)
-            {
-                // Invalid remote resources must never prevent Worker startup.
-            }
-        }
-
-        return BetterGiJsonList.Load(
-            assetPathResolver.Resolve(BetterGiAssetPaths.DefaultPickBlacklist));
     }
 
     public static BetterGiAutoPickRuleDecision Decide(

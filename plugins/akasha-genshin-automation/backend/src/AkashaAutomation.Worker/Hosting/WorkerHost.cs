@@ -109,8 +109,7 @@ public static class WorkerHost
         services.AddSingleton<IGameUiContextClassifier>(services => services.GetRequiredService<BetterGiAutoDialogueRecognizer>());
         services.AddSingleton<IAutoPickController>(services =>
             new AutoPickController(
-                services.GetRequiredService<IAssetPathResolver>(),
-                PluginResourcePaths.ResolvePickBlacklistPath()));
+                services.GetRequiredService<IAssetPathResolver>()));
         services.AddSingleton<AutoPickFeature>();
         services.AddSingleton<IAutomationFeature>(services => services.GetRequiredService<AutoPickFeature>());
         services.AddSingleton<IAutoDialogueController, AutoDialogueController>();

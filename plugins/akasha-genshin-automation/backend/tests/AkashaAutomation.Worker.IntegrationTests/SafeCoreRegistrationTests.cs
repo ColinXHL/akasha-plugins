@@ -7,7 +7,6 @@ using AkashaAutomation.BetterGiPort.Compatibility.AutoPick;
 using AkashaAutomation.BetterGiPort.Compatibility.AutoSkip;
 using AkashaAutomation.Features.AutoPick;
 using AkashaAutomation.Features.AutoDialogue;
-using AkashaAutomation.Worker.Configuration;
 using AkashaAutomation.Worker.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -16,18 +15,6 @@ namespace AkashaAutomation.Worker.IntegrationTests;
 
 public sealed class AutomationCoreRegistrationTests
 {
-    [Fact]
-    public void PluginResourcePaths_ShouldResolvePickBlacklistBelowPassedDataDirectory()
-    {
-        var dataDirectory = Path.Combine(Path.GetTempPath(), $"akasha-plugin-data-{Guid.NewGuid():N}");
-
-        var result = PluginResourcePaths.ResolvePickBlacklistPath(dataDirectory);
-
-        Assert.Equal(
-            Path.Combine(Path.GetFullPath(dataDirectory), "pick-blacklist", "current.json"),
-            result);
-    }
-
     [Fact]
     public async Task AddAutomationCore_RegistersForegroundOnlyRealInput()
     {
