@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "commit": "c5879195593c874cb19e2aa24148ec0b17fd341d",
+  "commit": "efccf44430979a7e79a6fc6a2936c959efa7cf5a",
   "plugins": [
     {
       "id": "bilibili-page-list",
