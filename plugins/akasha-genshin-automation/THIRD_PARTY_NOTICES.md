@@ -4,7 +4,7 @@ This inventory must be completed before the first distributable plugin package i
 
 ## BetterGI
 
-Akasha Automation currently includes four unmodified configuration list files, the hangout option configuration, the minimal PP-OCRv4 and Silero VAD model sets, six AutoPick templates and twenty AutoSkip templates from BetterGI `0.62.0`:
+Akasha Automation currently includes four unmodified configuration list files, the hangout option configuration, the minimal PP-OCRv4 and Silero VAD model sets, six AutoPick templates and twenty AutoSkip templates from BetterGI `0.62.0`, plus sixteen QuickTeleport templates from BetterGI `0.63.0`:
 
 - `Assets/Config/Pick/default_pick_black_lists.json`
 - `Assets/Config/Skip/default_pause_options.json`
@@ -22,9 +22,10 @@ Akasha Automation currently includes four unmodified configuration list files, t
 - `Assets/Recognition/AutoPick/1920x1080/icon_option.png`
 - `Assets/Config/Skip/hangout.json`
 - all declared files below `Assets/Recognition/AutoSkip/1920x1080`
+- all declared files below `Assets/Recognition/QuickTeleport/1920x1080`
 - `Assets/Model/Vad/LICENSE`, `README.md`, and `silero_vad.onnx`
 
-Phase 4 and Phase 5 include translated AutoPick and AutoSkip behavior derived from the source files declared in the BetterGI manifest. BetterGI is copyright its contributors and licensed under GPL-3.0. The upstream repository is `https://github.com/babalae/better-genshin-impact`. Source and release pins, file mappings, hashes, local translation decisions, and list statistics are recorded in `DERIVATION.md` and `upstream/bettergi/`.
+Phase 4 and Phase 5 include translated AutoPick and AutoSkip behavior, and the QuickTeleport feature includes translated behavior from BetterGI `0.63.0`, all derived from source files declared in the BetterGI manifest. BetterGI is copyright its contributors and licensed under GPL-3.0. The upstream repository is `https://github.com/babalae/better-genshin-impact`. Source and release pins, file mappings, hashes, local translation decisions, and list statistics are recorded in `DERIVATION.md` and `upstream/bettergi/`.
 
 The model README identifies PaddleOCR inference models converted through Paddle2ONNX. Their upstream license texts and the exact conversion provenance must be included in the Phase 7 release license review; the BetterGI archive and every copied file are already pinned by SHA-256.
 

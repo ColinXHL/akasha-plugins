@@ -1,7 +1,9 @@
 var AUTO_PICK_KEY = "autoPickEnabled";
 var AUTO_DIALOGUE_KEY = "autoDialogueEnabled";
+var QUICK_TELEPORT_KEY = "quickTeleportEnabled";
 var AUTO_PICK_HOTKEY_KEY = "autoPickHotkey";
 var AUTO_DIALOGUE_HOTKEY_KEY = "autoDialogueHotkey";
+var QUICK_TELEPORT_HOTKEY_KEY = "quickTeleportHotkey";
 
 function readBoolean(key, defaultValue) {
     var value = config.get(key, defaultValue);
@@ -87,6 +89,14 @@ function buildAutoDialogueOptions() {
     };
 }
 
+function buildQuickTeleportOptions() {
+    return {
+        enabled: readBoolean(QUICK_TELEPORT_KEY, false),
+        teleportListClickDelayMilliseconds: readInteger("teleportListClickDelayMilliseconds", 200, 0, 5000),
+        waitTeleportPanelDelayMilliseconds: readInteger("waitTeleportPanelDelayMilliseconds", 50, 0, 5000)
+    };
+}
+
 function ensureSucceeded(result, operation) {
     if (!result || !result.success) {
         var message = result && result.error ? result.error : "未知错误";
@@ -165,11 +175,24 @@ function registerFeatureHotkeys() {
                 "自动剧情");
         },
         "自动剧情");
+
+    registerFeatureHotkey(
+        QUICK_TELEPORT_HOTKEY_KEY,
+        "F10",
+        function () {
+            toggleFeature(
+                QUICK_TELEPORT_KEY,
+                "features.quickTeleport.setOptions",
+                buildQuickTeleportOptions,
+                "快速传送");
+        },
+        "快速传送");
 }
 
 function onLoad() {
     var autoPickOptions = buildAutoPickOptions();
     var autoDialogueOptions = buildAutoDialogueOptions();
+    var quickTeleportOptions = buildQuickTeleportOptions();
     registerFeatureHotkeys();
 
     log.info("正在启动 Akasha Automation Worker...");
@@ -179,11 +202,12 @@ function onLoad() {
             return Promise.all([
                 applyFeatureOptions("features.autoPick.setOptions", autoPickOptions, "自动拾取"),
                 applyFeatureOptions("features.autoDialogue.setOptions", autoDialogueOptions, "自动剧情"),
+                applyFeatureOptions("features.quickTeleport.setOptions", quickTeleportOptions, "快速传送"),
                 companion.invoke("worker.getStatus")
             ]);
         })
         .then(function (results) {
-            var statusResult = ensureSucceeded(results[2], "读取 Worker 状态");
+            var statusResult = ensureSucceeded(results[3], "读取 Worker 状态");
             var status = statusResult.data;
             log.info(
                 "Worker 已连接，状态=" + status.state +

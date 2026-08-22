@@ -9,8 +9,10 @@ using AkashaAutomation.Core.Ocr;
 using AkashaAutomation.BetterGiPort.Compatibility.AutoPick;
 using AkashaAutomation.BetterGiPort.Compatibility.AutoSkip;
 using AkashaAutomation.BetterGiPort.Compatibility.Ocr;
+using AkashaAutomation.BetterGiPort.Compatibility.QuickTeleport;
 using AkashaAutomation.Features.AutoPick;
 using AkashaAutomation.Features.AutoDialogue;
+using AkashaAutomation.Features.QuickTeleport;
 using AkashaAutomation.Worker.Configuration;
 using AkashaAutomation.Worker.Logging;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,15 +55,15 @@ public static class WorkerHost
                 services.GetRequiredService<ILoggerFactory>(),
                 autoPickController: services.GetRequiredService<IAutoPickController>(),
                 autoDialogueController: services.GetRequiredService<IAutoDialogueController>(),
+                quickTeleportController: services.GetRequiredService<IQuickTeleportController>(),
+                featureControls: services.GetRequiredService<AutomationFeatureControls>(),
                 realInputEnabled: true));
         builder.Services.AddSingleton<WorkerApplication>(services =>
             new WorkerApplication(
                 services.GetRequiredService<IParentProcessLifetime>(),
                 services.GetRequiredService<WorkerRuntime>(),
                 services.GetRequiredService<ILogger<WorkerApplication>>(),
-                inputArbiter: services.GetRequiredService<IInputArbiter>(),
-                autoPickController: services.GetRequiredService<IAutoPickController>(),
-                autoDialogueController: services.GetRequiredService<IAutoDialogueController>()));
+                inputArbiter: services.GetRequiredService<IInputArbiter>()));
 
         var host = builder.Build();
         try
@@ -106,13 +108,22 @@ public static class WorkerHost
             services.GetRequiredService<IAssetPathResolver>()));
         services.AddSingleton<IOcrEngine, PaddleOcrEngine>();
         services.AddSingleton<BetterGiAutoDialogueRecognizer>();
-        services.AddSingleton<IGameUiContextClassifier>(services => services.GetRequiredService<BetterGiAutoDialogueRecognizer>());
+        services.AddSingleton<BetterGiQuickTeleportRecognizer>();
+        services.AddSingleton<IGameUiContextDetector>(services =>
+            services.GetRequiredService<BetterGiAutoDialogueRecognizer>());
+        services.AddSingleton<IGameUiContextDetector>(services =>
+            services.GetRequiredService<BetterGiQuickTeleportRecognizer>());
+        services.AddSingleton<IGameUiContextClassifier, CompositeGameUiContextClassifier>();
         services.AddSingleton<IAutoPickController>(services =>
             new AutoPickController(
                 services.GetRequiredService<IAssetPathResolver>()));
+        services.AddSingleton<IAutomationFeatureControl>(services =>
+            services.GetRequiredService<IAutoPickController>());
         services.AddSingleton<AutoPickFeature>();
         services.AddSingleton<IAutomationFeature>(services => services.GetRequiredService<AutoPickFeature>());
         services.AddSingleton<IAutoDialogueController, AutoDialogueController>();
+        services.AddSingleton<IAutomationFeatureControl>(services =>
+            services.GetRequiredService<IAutoDialogueController>());
         services.AddSingleton<IDialogueOptionVoiceWaiter, SileroDialogueOptionVoiceWaiter>();
         services.AddSingleton<RewardDialogueSceneHandler>();
         services.AddSingleton<HangoutDialogueSceneHandler>();
@@ -126,10 +137,16 @@ public static class WorkerHost
         services.AddSingleton<IAutoDialogueSceneHandler>(services => services.GetRequiredService<SubmitGoodsDialogueSceneHandler>());
         services.AddSingleton<AutoDialogueFeature>();
         services.AddSingleton<IAutomationFeature>(services => services.GetRequiredService<AutoDialogueFeature>());
+        services.AddSingleton<IQuickTeleportController, QuickTeleportController>();
+        services.AddSingleton<IAutomationFeatureControl>(services =>
+            services.GetRequiredService<IQuickTeleportController>());
+        services.AddSingleton<QuickTeleportFeature>();
+        services.AddSingleton<IAutomationFeature>(services => services.GetRequiredService<QuickTeleportFeature>());
         services.AddSingleton<ICaptureSource, WindowsBitBltCaptureSource>();
         services.AddSingleton<IInputService, WindowsSendInputService>();
         services.AddSingleton<InputArbiter>();
         services.AddSingleton<IInputArbiter>(services => services.GetRequiredService<InputArbiter>());
+        services.AddSingleton<AutomationFeatureControls>();
         services.AddSingleton<IWorkerRuntimeResource, AutoDialogueRuntimeResource>();
         services.AddSingleton<IWorkerRuntimeResource, AutomationRecognitionRuntimeResource>();
         services.AddSingleton<IWorkerRuntimeResource, AutomationInputRuntimeResource>();

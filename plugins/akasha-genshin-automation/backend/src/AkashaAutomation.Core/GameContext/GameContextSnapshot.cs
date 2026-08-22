@@ -11,6 +11,8 @@ public sealed record GameContextSnapshot(
     public bool IsGameForeground => Window?.IsForeground == true;
 
     public bool IsTalk => UiCategory == GameUiCategory.Talk;
+
+    public bool IsBigMap => UiCategory == GameUiCategory.BigMap;
 }
 
 public enum GameUiCategory

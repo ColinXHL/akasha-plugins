@@ -5,6 +5,8 @@ param(
 
     [string] $ManifestPath = (Join-Path $PSScriptRoot '..\upstream\bettergi\manifest.json'),
 
+    [string] $ArtifactId,
+
     [switch] $VerifyOnly
 )
 
@@ -148,12 +150,42 @@ function Get-JsonStringListStats {
     }
 }
 
+function Get-AssetArtifactId {
+    param([Parameter(Mandatory = $true)] $Asset)
+
+    $property = $Asset.PSObject.Properties['runtimeArtifactId']
+    if ($null -eq $property -or [string]::IsNullOrWhiteSpace([string] $property.Value)) {
+        return $null
+    }
+
+    return [string] $property.Value
+}
+
 $resolvedManifestPath = (Resolve-Path -LiteralPath $ManifestPath).Path
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path (Split-Path -Parent $resolvedManifestPath) '..\..'))
 $manifest = Get-Content -LiteralPath $resolvedManifestPath -Raw | ConvertFrom-Json
 
 if ($manifest.schemaVersion -ne 1) {
     throw "Unsupported BetterGI import manifest schema: $($manifest.schemaVersion)"
+}
+
+$runtimeArtifact = $manifest.runtimeArtifact
+if ([string]::IsNullOrWhiteSpace($ArtifactId)) {
+    $selectedAssets = @($manifest.assets | Where-Object { $null -eq (Get-AssetArtifactId -Asset $_) })
+}
+else {
+    $supplementalProperty = $manifest.PSObject.Properties['supplementalRuntimeArtifacts']
+    $supplementalArtifacts = if ($null -eq $supplementalProperty) { @() } else { @($supplementalProperty.Value) }
+    $runtimeArtifact = $supplementalArtifacts | Where-Object { $_.id -eq $ArtifactId } | Select-Object -First 1
+    if ($null -eq $runtimeArtifact) {
+        throw "Unknown BetterGI runtime artifact id: $ArtifactId"
+    }
+
+    $selectedAssets = @($manifest.assets | Where-Object { (Get-AssetArtifactId -Asset $_) -eq $ArtifactId })
+}
+
+if ($selectedAssets.Count -eq 0) {
+    throw 'The selected BetterGI runtime artifact has no declared assets.'
 }
 
 $resolvedSource = (Resolve-Path -LiteralPath $Source).Path
@@ -168,10 +200,10 @@ try {
             throw 'The source file must be a BetterGI .7z or .zip archive.'
         }
 
-        if (-not [string]::IsNullOrWhiteSpace($manifest.runtimeArtifact.sha256)) {
+        if (-not [string]::IsNullOrWhiteSpace($runtimeArtifact.sha256)) {
             $artifactHash = (Get-FileHash -LiteralPath $resolvedSource -Algorithm SHA256).Hash
-            if (-not $artifactHash.Equals($manifest.runtimeArtifact.sha256, [StringComparison]::OrdinalIgnoreCase)) {
-                throw "BetterGI artifact hash mismatch. Expected $($manifest.runtimeArtifact.sha256), got $artifactHash."
+            if (-not $artifactHash.Equals($runtimeArtifact.sha256, [StringComparison]::OrdinalIgnoreCase)) {
+                throw "BetterGI artifact hash mismatch. Expected $($runtimeArtifact.sha256), got $artifactHash."
             }
         }
 
@@ -180,13 +212,13 @@ try {
         $temporaryDirectory = Join-Path ([IO.Path]::GetTempPath()) ("akasha-bettergi-import-" + [Guid]::NewGuid().ToString('N'))
         [void] (New-Item -ItemType Directory -Path $temporaryDirectory)
 
-        $archiveRoot = $manifest.runtimeArtifact.archiveRoot
+        $archiveRoot = $runtimeArtifact.archiveRoot
         if ([string]::IsNullOrWhiteSpace($archiveRoot)) {
             throw 'The runtime artifact manifest must declare archiveRoot.'
         }
 
         $archiveRootPath = Get-ContainedPath -Root $temporaryDirectory -RelativePath $archiveRoot
-        $sourcePaths = @($manifest.assets | ForEach-Object {
+        $sourcePaths = @($selectedAssets | ForEach-Object {
             ($archiveRoot.TrimEnd('/', '\') + '/' + $_.sourcePath).Replace('/', '\')
         })
         $arguments = @('x', '-y', "-o$temporaryDirectory", '--', $resolvedSource) + $sourcePaths
@@ -212,12 +244,14 @@ try {
         UndeclaredTargetFiles = 0
     }
     $declaredTargets = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    foreach ($declaredAsset in $manifest.assets) {
+        $declaredTargetPath = Get-ContainedPath -Root $repositoryRoot -RelativePath $declaredAsset.targetPath
+        [void] $declaredTargets.Add([IO.Path]::GetFullPath($declaredTargetPath))
+    }
 
-    foreach ($asset in $manifest.assets) {
+    foreach ($asset in $selectedAssets) {
         $sourcePath = Get-ContainedPath -Root $sourceRoot -RelativePath $asset.sourcePath
         $targetPath = Get-ContainedPath -Root $repositoryRoot -RelativePath $asset.targetPath
-        [void] $declaredTargets.Add([IO.Path]::GetFullPath($targetPath))
-
         if (-not (Test-Path -LiteralPath $sourcePath -PathType Leaf)) {
             throw "Declared BetterGI asset is missing from the source: $($asset.sourcePath)"
         }

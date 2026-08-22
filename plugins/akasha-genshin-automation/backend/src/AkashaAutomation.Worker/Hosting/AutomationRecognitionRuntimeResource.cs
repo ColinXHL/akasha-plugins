@@ -1,5 +1,6 @@
 using AkashaAutomation.BetterGiPort.Compatibility.AutoPick;
 using AkashaAutomation.BetterGiPort.Compatibility.AutoSkip;
+using AkashaAutomation.BetterGiPort.Compatibility.QuickTeleport;
 using AkashaAutomation.Core.Abstractions;
 
 namespace AkashaAutomation.Worker.Hosting;
@@ -8,7 +9,8 @@ public sealed class AutomationRecognitionRuntimeResource(
     ICaptureSource captureSource,
     IOcrEngine ocrEngine,
     BetterGiAutoPickRecognizer autoPickRecognizer,
-    BetterGiAutoDialogueRecognizer autoDialogueRecognizer) : IWorkerRuntimeResource
+    BetterGiAutoDialogueRecognizer autoDialogueRecognizer,
+    BetterGiQuickTeleportRecognizer quickTeleportRecognizer) : IWorkerRuntimeResource
 {
     public async ValueTask StopAsync(CancellationToken cancellationToken)
     {
@@ -17,5 +19,6 @@ public sealed class AutomationRecognitionRuntimeResource(
         await ocrEngine.DisposeAsync().ConfigureAwait(false);
         autoDialogueRecognizer.Dispose();
         autoPickRecognizer.Dispose();
+        quickTeleportRecognizer.Dispose();
     }
 }

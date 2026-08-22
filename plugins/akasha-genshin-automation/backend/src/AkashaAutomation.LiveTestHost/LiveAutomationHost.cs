@@ -79,6 +79,7 @@ internal sealed class LiveAutomationHost(LiveTestHostOptions options)
             hangout,
             handlers,
             clock);
+        var contextClassifier = new CompositeGameUiContextClassifier([dialogueRecognizer]);
         var scheduler = new SingleFrameScheduler(
             capture,
             contextProvider,
@@ -86,7 +87,7 @@ internal sealed class LiveAutomationHost(LiveTestHostOptions options)
             arbiter,
             diagnostics,
             clock,
-            dialogueRecognizer);
+            contextClassifier);
 
         Console.WriteLine(
             $"已启动：自动拾取 {State(options.AutoPickEnabled)}，自动剧情 {State(options.AutoDialogueEnabled)}，" +

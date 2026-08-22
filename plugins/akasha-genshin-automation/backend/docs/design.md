@@ -74,6 +74,7 @@ AkashaAutomation.Worker
 ├─ Automation Scheduler
 ├─ AutoDialogue
 ├─ AutoPick
+├─ QuickTeleport
 └─ Input Arbiter
 ```
 
@@ -132,10 +133,11 @@ plugins/akasha-genshin-automation/
 │  │  ├─ AutoPick/
 │  │  │  ├─ Recognition/
 │  │  │  └─ Assets/
-│  │  └─ AutoDialogue/
-│  │     ├─ Recognition/
-│  │     ├─ Models/
-│  │     └─ Assets/
+│  │  ├─ AutoDialogue/
+│  │  │  ├─ Recognition/
+│  │  │  ├─ Models/
+│  │  │  └─ Assets/
+│  │  └─ QuickTeleport/
 │  ├─ AkashaAutomation.DevHost/
 │  │  ├─ Program.cs
 │  │  └─ AutoPickDevHost.cs
@@ -157,7 +159,8 @@ plugins/akasha-genshin-automation/
 ├─ testdata/
 │  └─ frames/
 │     ├─ auto-pick/
-│     └─ auto-dialogue/
+│     ├─ auto-dialogue/
+│     └─ quick-teleport/
 └─ scripts/
 ```
 
@@ -171,6 +174,9 @@ plugins/akasha-genshin-automation/
 - OCR 引擎抽象和实现。
 - 键鼠输入抽象和实现。
 - 自动化调度器。
+- 可组合的游戏 UI detector 与分类器。
+- 通用单结果和多结果模板匹配。
+- 与具体功能无关的启用状态和急停控制契约。
 - 日志与诊断接口。
 
 需要优先形成的测试接缝：
@@ -181,6 +187,8 @@ IOcrEngine
 IInputService
 IClock
 IDiagnosticsSink
+IGameUiContextDetector
+IAutomationFeatureControl
 ```
 
 ### AkashaAutomation.Features
@@ -189,6 +197,7 @@ IDiagnosticsSink
 
 - `AutoPickFeature`。
 - `AutoDialogueFeature`。
+- `QuickTeleportFeature`。
 - 对应配置、识别规则、模型和素材。
 
 Feature 只通过 Core 接口和 BetterGI Port 适配器获取截图、OCR、上下文和输入能力，不直接管理进程、命名管道或应用生命周期。
@@ -201,7 +210,7 @@ Feature 只通过 Core 接口和 BetterGI Port 适配器获取截图、OCR、上
 - 通过 `Compatibility` 将 BetterGI 的静态上下文、素材路径、日志、截图和输入调用映射到 Core 接口。
 - 不迁移 WPF UI、ViewModel、托盘、更新器、脚本系统和无关任务。
 - 默认黑名单、剧情关键词、模板和必需模型随仓库与插件包分发，运行时不读取 BetterGI 安装目录。
-- `Features` 对外提供 `AutoPickFeature` 与 `AutoDialogueFeature`，上游名称不泄漏到 companion 协议。
+- `Features` 对外提供 `AutoPickFeature`、`AutoDialogueFeature` 与 `QuickTeleportFeature`，上游名称不泄漏到 companion 协议。
 
 依赖方向固定为：
 
@@ -334,16 +343,19 @@ AkashaNavigator 中增加单例 `ICompanionProcessManager`，按插件 ID 持有
 截图和 Feature 不并行争抢输入。每个调度周期：
 
 ```text
-捕获一帧
-→ 更新 GameContext
-→ AutoDialogue 高优先级判断
-→ AutoPick 低优先级判断
+检查是否存在已启用 Feature
+→ 捕获一帧
+→ 按 detector 优先级更新 GameContext
+→ 按 Feature 优先级生成动作意图
 → InputArbiter 提交至多一组动作
 ```
 
 原则：
 
 - 同一帧只产生一组最终输入。
+- 调度启停与紧急停止只依赖 `IAutomationFeatureControl`，不得枚举具体 Feature 名称。
+- UI 场景由多个 `IGameUiContextDetector` 组合分类，Feature recognizer 不直接占有全局分类器职责。
+- 多目标模板识别统一通过 `ITemplateMatcher.MatchAll`，Port 层不得保留第二份 OpenCV 实现。
 - 自动剧情运行时可以抑制自动拾取。
 - Feature 产生“动作意图”，由 Input Arbiter 统一执行。
 - 紧急停止直接清空动作队列并阻止后续输入。

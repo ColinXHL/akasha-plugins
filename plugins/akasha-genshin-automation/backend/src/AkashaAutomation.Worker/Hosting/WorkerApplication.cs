@@ -4,8 +4,6 @@ using System.Text.Json;
 using AkashaAutomation.Core.Abstractions;
 using AkashaAutomation.Worker.Bridge;
 using AkashaAutomation.Worker.Configuration;
-using AkashaAutomation.Features.AutoPick;
-using AkashaAutomation.Features.AutoDialogue;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -26,8 +24,6 @@ public sealed class WorkerApplication
     private readonly TimeSpan _handshakeTimeout;
     private readonly DateTimeOffset _startedAtUtc;
     private readonly IInputArbiter? _inputArbiter;
-    private readonly IAutoPickController? _autoPickController;
-    private readonly IAutoDialogueController? _autoDialogueController;
 
     public WorkerApplication(
         IParentProcessLifetime parentProcess,
@@ -41,9 +37,7 @@ public sealed class WorkerApplication
             protocol,
             connectionTimeout,
             handshakeTimeout,
-            inputArbiter: null,
-            autoPickController: null,
-            autoDialogueController: null)
+            inputArbiter: null)
     {
     }
 
@@ -54,9 +48,7 @@ public sealed class WorkerApplication
         LengthPrefixedJsonProtocol? protocol = null,
         TimeSpan? connectionTimeout = null,
         TimeSpan? handshakeTimeout = null,
-        IInputArbiter? inputArbiter = null,
-        IAutoPickController? autoPickController = null,
-        IAutoDialogueController? autoDialogueController = null)
+        IInputArbiter? inputArbiter = null)
     {
         _parentProcess = parentProcess ?? throw new ArgumentNullException(nameof(parentProcess));
         _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
@@ -66,8 +58,6 @@ public sealed class WorkerApplication
         _handshakeTimeout = handshakeTimeout ?? TimeSpan.FromSeconds(10);
         _startedAtUtc = DateTimeOffset.UtcNow;
         _inputArbiter = inputArbiter;
-        _autoPickController = autoPickController;
-        _autoDialogueController = autoDialogueController;
     }
 
     public async Task<int> RunAsync(
@@ -295,8 +285,7 @@ public sealed class WorkerApplication
                 if (request.Method.Equals("automation.emergencyStop", StringComparison.Ordinal))
                 {
                     _runtime.EmergencyStop.Trigger(WorkerStopReason.CompanionEmergencyStop);
-                    _autoPickController?.SetEnabled(false);
-                    _autoDialogueController?.SetEnabled(false);
+                    _runtime.FeatureControls.DisableAll();
                     if (_inputArbiter is not null)
                     {
                         await _inputArbiter.EmergencyStopAsync(cancellationToken).ConfigureAwait(false);

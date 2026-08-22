@@ -2,8 +2,6 @@ using System.Diagnostics;
 using AkashaAutomation.Core.Abstractions;
 using AkashaAutomation.Core.Diagnostics;
 using AkashaAutomation.Core.Scheduling;
-using AkashaAutomation.Features.AutoPick;
-using AkashaAutomation.Features.AutoDialogue;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -12,8 +10,7 @@ namespace AkashaAutomation.Worker.Hosting;
 public sealed class AutomationSchedulerHostedService : BackgroundService, IWorkerRuntimeResource
 {
     private readonly SingleFrameScheduler _scheduler;
-    private readonly IAutoPickController _autoPickController;
-    private readonly IAutoDialogueController _autoDialogueController;
+    private readonly AutomationFeatureControls _featureControls;
     private readonly IOcrEngine _ocrEngine;
     private readonly IClock _clock;
     private readonly IDiagnosticsSink _diagnostics;
@@ -21,16 +18,14 @@ public sealed class AutomationSchedulerHostedService : BackgroundService, IWorke
 
     public AutomationSchedulerHostedService(
         SingleFrameScheduler scheduler,
-        IAutoPickController autoPickController,
-        IAutoDialogueController autoDialogueController,
+        AutomationFeatureControls featureControls,
         IOcrEngine ocrEngine,
         IClock clock,
         IDiagnosticsSink diagnostics,
         ILogger<AutomationSchedulerHostedService> logger)
     {
         _scheduler = scheduler;
-        _autoPickController = autoPickController;
-        _autoDialogueController = autoDialogueController;
+        _featureControls = featureControls;
         _ocrEngine = ocrEngine;
         _clock = clock;
         _diagnostics = diagnostics;
@@ -59,7 +54,7 @@ public sealed class AutomationSchedulerHostedService : BackgroundService, IWorke
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (!_autoPickController.Options.Enabled && !_autoDialogueController.Options.Enabled)
+            if (!_featureControls.AnyEnabled)
             {
                 await _clock.DelayAsync(TimeSpan.FromMilliseconds(100), stoppingToken).ConfigureAwait(false);
                 continue;

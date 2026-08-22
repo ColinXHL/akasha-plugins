@@ -108,6 +108,9 @@ Protocol v1 currently supports:
 | `features.autoDialogue.getOptions` | Returns the normalized AutoDialogue options. |
 | `features.autoDialogue.setOptions` | Validates and atomically replaces dialogue, option, special-scene and VAD options. |
 | `features.autoDialogue.setEnabled` | Sets `{ enabled: boolean }`; disabling immediately cancels an active voice wait. |
+| `features.quickTeleport.getOptions` | Returns the normalized QuickTeleport options. |
+| `features.quickTeleport.setOptions` | Validates and atomically replaces QuickTeleport timing options. |
+| `features.quickTeleport.setEnabled` | Sets `{ enabled: boolean }` and resets any pending teleport state when disabled. |
 
 AkashaNavigator may also send `{ "type": "shutdown" }` when no acknowledgement is required.
 
@@ -158,12 +161,21 @@ The message type vocabulary is `hello`, `welcome`, `request`, `response`, `event
         "voiceWaitActive": false,
         "voiceWaitFallback": false
       }
+    },
+    "quickTeleport": {
+      "isEnabled": false,
+      "isRunning": false,
+      "quickTeleportRecognition": {
+        "state": "Scanning",
+        "reason": "not_evaluated",
+        "intentSubmitted": false
+      }
     }
   }
 }
 ```
 
-`lastError` is omitted until an error is reported. AutoPick reports the latest text and rule result. AutoDialogue reports Talk classification, recognized option texts, decision, VAD/fallback state, frame sequence and timestamp. An absent game window is normal: the Worker remains `ready`, and real input remains disabled.
+`lastError` is omitted until an error is reported. AutoPick reports the latest text and rule result. AutoDialogue reports Talk classification, recognized option texts, decision, VAD/fallback state, frame sequence and timestamp. QuickTeleport reports its non-blocking state, candidate text, decision, frame sequence and timestamp. An absent game window is normal: the Worker remains `ready`, and real input remains disabled.
 
 ## Lifecycle
 
@@ -195,5 +207,5 @@ Before a connection is attempted, the Worker confirms that the declared parent P
 - The token must never be included in errors or logs.
 - AkashaNavigator owns pipe ACL creation and constant-time token validation.
 - The Worker never accepts executable paths, working directories, environment variables or arbitrary command lines through the protocol.
-- Capture, OCR, AutoPick, AutoDialogue and input run only inside the Worker. Phase 6 registers `WindowsSendInputService`; it rejects input unless the located game window is the current foreground window. Both Features remain disabled until the Profile-level plugin switches explicitly enable them.
+- Capture, OCR, AutoPick, AutoDialogue, QuickTeleport and input run only inside the Worker. Phase 6 registers `WindowsSendInputService`; it rejects input unless the located game window is the current foreground window. All Features remain disabled until the Profile-level plugin switches explicitly enable them.
 - Structured rolling logs are written below the current user's local application-data directory, never beside the installed Worker executable.
