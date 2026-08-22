@@ -74,11 +74,17 @@
               "type": "checkbox",
               "key": "blackListEnabled",
               "label": "启用默认拾取黑名单",
+              "description": "默认名单可独立于插件程序更新；启动 AkashaNavigator 时会自动检查。",
               "default": true
             },
             {
               "type": "button",
-              "label": "打开默认黑名单文件夹",
+              "label": "立即检查默认黑名单更新",
+              "action": "updatePluginResources"
+            },
+            {
+              "type": "button",
+              "label": "打开插件内置黑名单文件夹",
               "action": "openPluginFolder",
               "relativePath": "runtime/Assets/Config/Pick"
             },

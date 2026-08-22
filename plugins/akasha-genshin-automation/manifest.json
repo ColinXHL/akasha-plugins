@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "akasha-genshin-automation",
   "name": "Akasha 原神自动化",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "由 AkashaNavigator 安全托管的进程外原神自动化组件",
   "authors": [
     {
@@ -12,7 +12,7 @@
   ],
   "homepage": "https://github.com/ColinXHL/akasha-plugins/tree/main/plugins/akasha-genshin-automation",
   "host": {
-    "minVersion": "1.4.1"
+    "minVersion": "1.4.2"
   },
   "main": "frontend/main.js",
   "settings": "frontend/settings_ui.json",
@@ -61,8 +61,8 @@
   },
   "distribution": {
     "type": "release",
-    "tag": "akasha-genshin-automation-v0.5.0",
-    "asset": "akasha-genshin-automation-0.5.0-win-x64.zip"
+    "tag": "akasha-genshin-automation-v0.5.1",
+    "asset": "akasha-genshin-automation-0.5.1-win-x64.zip"
   },
   "backend": {
     "type": "companion-process",

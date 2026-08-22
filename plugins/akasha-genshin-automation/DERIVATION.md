@@ -117,6 +117,16 @@ Keeping it in the supplemental artifact set makes the update reproducible while
 user-configured exact and fuzzy blacklist entries remain outside the package and
 continue to be preserved across plugin updates.
 
+Starting with plugin `0.5.1`, the packaged `0.63.0` file remains the audited offline
+fallback. Newer stable BetterGI Releases can update only this list through the
+content-addressed `resources.json` contract. The daily workflow extracts the exact
+upstream JSON, validates its structure and safety bounds, publishes identical assets
+to GitHub and CNB, verifies both public readbacks by SHA-256, and only then updates
+catalog metadata. Each accepted upstream Release is recorded in
+`resources/bettergi-blacklist-history.json`. Runtime files are accepted only when
+AkashaNavigator's atomic `resource-state.json` size and SHA-256 metadata match; an
+invalid or interrupted update never replaces the last known-good snapshot.
+
 The local implementation translates the upstream 300 ms scan limit, big-map UI
 guards, direct teleport-button path, top-to-bottom candidate matching, white-text
 OCR validation, 200 ms candidate delay, and 50 ms detail-panel delay. It replaces

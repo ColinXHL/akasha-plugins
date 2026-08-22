@@ -20,10 +20,22 @@ public static class BetterGiAutoPickRules
         IEnumerable<string>? userWhitelist = null)
     {
         ArgumentNullException.ThrowIfNull(assetPathResolver);
-        var exactBlacklist = BetterGiJsonList
-            .Load(
-                assetPathResolver.Resolve(
-                    BetterGiAssetPaths.DefaultPickBlacklist))
+        return LoadLists(
+            BetterGiJsonList.Load(
+                assetPathResolver.Resolve(BetterGiAssetPaths.DefaultPickBlacklist)),
+            userExactBlacklist,
+            userFuzzyBlacklist,
+            userWhitelist);
+    }
+
+    public static BetterGiAutoPickLists LoadLists(
+        IEnumerable<string> defaultExactBlacklist,
+        IEnumerable<string>? userExactBlacklist = null,
+        IEnumerable<string>? userFuzzyBlacklist = null,
+        IEnumerable<string>? userWhitelist = null)
+    {
+        ArgumentNullException.ThrowIfNull(defaultExactBlacklist);
+        var exactBlacklist = NonEmpty(defaultExactBlacklist)
             .ToHashSet(StringComparer.Ordinal);
         exactBlacklist.UnionWith(NonEmpty(userExactBlacklist));
         return new BetterGiAutoPickLists(

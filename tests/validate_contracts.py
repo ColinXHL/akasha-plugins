@@ -118,8 +118,10 @@ def validate_inventory() -> list[str]:
 def main() -> int:
     manifest_schema = load_json(SCHEMA_DIRECTORY / "plugin-manifest.schema.json")
     index_schema = load_json(SCHEMA_DIRECTORY / "repository-index.schema.json")
+    resource_schema = load_json(SCHEMA_DIRECTORY / "plugin-resources.schema.json")
     Draft202012Validator.check_schema(manifest_schema)
     Draft202012Validator.check_schema(index_schema)
+    Draft202012Validator.check_schema(resource_schema)
 
     registry = build_registry(manifest_schema, index_schema)
     manifest_validator = Draft202012Validator(
@@ -132,6 +134,13 @@ def main() -> int:
     )
 
     failures: list[str] = []
+    resource_validator = Draft202012Validator(resource_schema)
+    for path in sorted((ROOT / "plugins").glob("*/resources.json")):
+        instance = load_json(path)
+        failures.extend(
+            f"{path}: {error.message}"
+            for error in resource_validator.iter_errors(instance)
+        )
     valid_directory = EXAMPLE_DIRECTORY / "valid"
     for path in sorted(valid_directory.glob("*.manifest.json")):
         instance = load_json(path)
@@ -185,7 +194,7 @@ def main() -> int:
 
     print("Contract validation passed.")
     print(
-        "Validated 2 schemas, 3 valid examples, "
+        "Validated 3 schemas, 3 valid examples, "
         f"{invalid_manifest_count + 1} invalid examples, and the plugin inventory."
     )
     return 0
