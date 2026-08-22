@@ -78,7 +78,7 @@ class MigratedPluginTests(unittest.TestCase):
             "akasha-genshin-automation",
             manifest["id"],
         )
-        self.assertEqual("0.4.4", manifest["version"])
+        self.assertEqual("0.5.0", manifest["version"])
         self.assertEqual(
             {"companion", "hotkey"},
             set(manifest["permissions"]),
