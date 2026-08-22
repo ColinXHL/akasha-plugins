@@ -149,7 +149,7 @@
             {
               "type": "number",
               "key": "beforeAdvanceDelayMilliseconds",
-              "label": "推进对话前延迟（毫秒）",
+              "label": "每次推进对话前延迟（毫秒）",
               "default": 0,
               "min": 0,
               "max": 5000,

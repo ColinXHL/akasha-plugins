@@ -154,6 +154,46 @@ public sealed class AutoDialogueFeatureTests
     }
 
     [Fact]
+    public async Task Replay_AdvanceDelay_ShouldApplyBeforeEveryDialogueAdvance()
+    {
+        await using var scenario = await DialogueScenario.CreateAsync(
+            1920,
+            1080,
+            includeOption: false,
+            string.Empty,
+            frameCount: 5);
+        scenario.Controller.SetOptions(new AutoDialogueOptions
+        {
+            Enabled = true,
+            BeforeAdvanceDelayMilliseconds = 500,
+        });
+
+        var first = await scenario.Scheduler.RunOnceAsync();
+        Assert.Equal("advance_delay", Assert.Single(first.Decisions).Reason);
+        Assert.Empty(scenario.Input.Recordings);
+
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(500));
+        var second = await scenario.Scheduler.RunOnceAsync();
+        Assert.Equal("advance_dialogue", Assert.Single(second.Decisions).Reason);
+        Assert.Single(scenario.Input.Recordings);
+
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(200));
+        var third = await scenario.Scheduler.RunOnceAsync();
+        Assert.Equal("advance_delay", Assert.Single(third.Decisions).Reason);
+        Assert.Single(scenario.Input.Recordings);
+
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(499));
+        var fourth = await scenario.Scheduler.RunOnceAsync();
+        Assert.Equal("advance_delay", Assert.Single(fourth.Decisions).Reason);
+        Assert.Single(scenario.Input.Recordings);
+
+        scenario.Clock.Advance(TimeSpan.FromMilliseconds(1));
+        var fifth = await scenario.Scheduler.RunOnceAsync();
+        Assert.Equal("advance_dialogue", Assert.Single(fifth.Decisions).Reason);
+        Assert.Equal(2, scenario.Input.Recordings.Count);
+    }
+
+    [Fact]
     public async Task Replay_OptionBubbleWithoutOcr_ShouldStillClickFirstBubble()
     {
         await using var scenario = await DialogueScenario.CreateAsync(
@@ -616,6 +656,7 @@ public sealed class AutoDialogueFeatureTests
             IOcrEngine ocr,
             IDialogueOptionVoiceWaiter voiceWaiter,
             AutoDialogueController controller,
+            FakeClock clock,
             RecordingInputService input,
             SingleFrameScheduler scheduler)
         {
@@ -625,11 +666,13 @@ public sealed class AutoDialogueFeatureTests
             _ocr = ocr;
             _voiceWaiter = voiceWaiter;
             Controller = controller;
+            Clock = clock;
             Input = input;
             Scheduler = scheduler;
         }
 
         public AutoDialogueController Controller { get; }
+        public FakeClock Clock { get; }
         public RecordingInputService Input { get; }
         public SingleFrameScheduler Scheduler { get; }
 
@@ -639,7 +682,8 @@ public sealed class AutoDialogueFeatureTests
             bool includeOption,
             string text,
             bool includeTalkMarker = true,
-            string? dialogueInteractionKey = null)
+            string? dialogueInteractionKey = null,
+            int frameCount = 1)
         {
             var directory = Path.Combine(Path.GetTempPath(), $"akasha-dialogue-{Guid.NewGuid():N}");
             Directory.CreateDirectory(directory);
@@ -693,7 +737,7 @@ public sealed class AutoDialogueFeatureTests
             var diagnostics = new InMemoryDiagnosticsSink();
             var input = new RecordingInputService();
             var arbiter = new InputArbiter(input, diagnostics, clock);
-            var capture = new ReplayCaptureSource([path], clock);
+            var capture = new ReplayCaptureSource(Enumerable.Repeat(path, frameCount), clock);
             var scheduler = new SingleFrameScheduler(
                 capture,
                 new StaticContextProvider(Context(width, height)),
@@ -702,7 +746,7 @@ public sealed class AutoDialogueFeatureTests
                 diagnostics,
                 clock,
                 new CompositeGameUiContextClassifier([recognizer]));
-            return Task.FromResult(new DialogueScenario(directory, capture, recognizer, ocr, voiceWaiter, controller, input, scheduler));
+            return Task.FromResult(new DialogueScenario(directory, capture, recognizer, ocr, voiceWaiter, controller, clock, input, scheduler));
         }
 
         public static GameContextSnapshot Context(int width, int height) =>
