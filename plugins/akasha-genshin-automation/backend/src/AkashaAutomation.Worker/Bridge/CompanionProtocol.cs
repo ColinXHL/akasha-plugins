@@ -84,6 +84,8 @@ public sealed record FeatureStatus(
     public AutoPickRecognitionStatus? Recognition { get; init; }
 
     public AutoDialogueRecognitionStatus? DialogueRecognition { get; init; }
+
+    public QuickTeleportRecognitionStatus? QuickTeleportRecognition { get; init; }
 }
 
 public sealed record AutoPickRecognitionStatus(
@@ -103,9 +105,18 @@ public sealed record AutoDialogueRecognitionStatus(
     long? FrameSequence,
     DateTimeOffset? UpdatedAtUtc);
 
+public sealed record QuickTeleportRecognitionStatus(
+    string State,
+    string? CandidateText,
+    string Reason,
+    bool IntentSubmitted,
+    long? FrameSequence,
+    DateTimeOffset? UpdatedAtUtc);
+
 public sealed record FeatureStatuses(
     FeatureStatus AutoPick,
-    FeatureStatus AutoDialogue);
+    FeatureStatus AutoDialogue,
+    FeatureStatus QuickTeleport);
 
 public sealed record WorkerErrorStatus(
     string Code,

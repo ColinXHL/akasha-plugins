@@ -43,4 +43,21 @@ public static class BetterGiAssetPaths
     public const string SileroVadReadme = "Assets/Model/Vad/README.md";
     public const string SileroVadModel = "Assets/Model/Vad/silero_vad.onnx";
     public const string HangoutOptions = "Assets/Config/Skip/hangout.json";
+    public const string QuickTeleportRoot = "Assets/Recognition/QuickTeleport/1920x1080";
+    public const string QuickTeleportButton = $"{QuickTeleportRoot}/GoTeleport.png";
+    public const string QuickTeleportMapScaleButton = $"{QuickTeleportRoot}/MapScaleButton.png";
+    public const string QuickTeleportMapCloseButton = $"{QuickTeleportRoot}/MapCloseButton.png";
+    public const string QuickTeleportMapSettingsButton = $"{QuickTeleportRoot}/MapSettingsButton.png";
+    public const string QuickTeleportMapChoose = $"{QuickTeleportRoot}/MapChoose.png";
+    public const string QuickTeleportWaypoint = $"{QuickTeleportRoot}/TeleportWaypoint.png";
+    public const string QuickTeleportStatueOfTheSeven = $"{QuickTeleportRoot}/StatueOfTheSeven.png";
+    public const string QuickTeleportDomain = $"{QuickTeleportRoot}/Domain.png";
+    public const string QuickTeleportDomain2 = $"{QuickTeleportRoot}/Domain2.png";
+    public const string QuickTeleportObsidianTotemPole = $"{QuickTeleportRoot}/ObsidianTotemPole.png";
+    public const string QuickTeleportPortableWaypoint = $"{QuickTeleportRoot}/PortableWaypoint.png";
+    public const string QuickTeleportMansion = $"{QuickTeleportRoot}/Mansion.png";
+    public const string QuickTeleportSubSpaceWaypoint = $"{QuickTeleportRoot}/SubSpaceWaypoint.png";
+    public const string QuickTeleportNodKraiMeetingPoint = $"{QuickTeleportRoot}/NodKraiMeetingPoint.png";
+    public const string QuickTeleportTabletOfTona = $"{QuickTeleportRoot}/TabletOfTona.png";
+    public const string QuickTeleportMarkTransPointMoonTower = $"{QuickTeleportRoot}/MarkTransPointMoonTower.png";
 }

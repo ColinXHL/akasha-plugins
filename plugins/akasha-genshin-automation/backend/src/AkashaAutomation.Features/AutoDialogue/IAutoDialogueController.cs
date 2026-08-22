@@ -1,8 +1,9 @@
 using AkashaAutomation.BetterGiPort.Upstream.AutoSkip;
+using AkashaAutomation.Core.Scheduling;
 
 namespace AkashaAutomation.Features.AutoDialogue;
 
-public interface IAutoDialogueController
+public interface IAutoDialogueController : IAutomationFeatureControl
 {
     event Action? Disabled;
 
@@ -11,8 +12,6 @@ public interface IAutoDialogueController
     AutoDialogueRuntimeStatus Status { get; }
 
     AutoDialogueConfiguration Snapshot { get; }
-
-    void SetEnabled(bool enabled);
 
     void SetOptions(AutoDialogueOptions options);
 

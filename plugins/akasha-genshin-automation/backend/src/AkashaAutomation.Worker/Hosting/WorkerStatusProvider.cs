@@ -2,6 +2,7 @@ using AkashaAutomation.Worker.Bridge;
 using AkashaAutomation.Worker.Configuration;
 using AkashaAutomation.Features.AutoPick;
 using AkashaAutomation.Features.AutoDialogue;
+using AkashaAutomation.Features.QuickTeleport;
 
 namespace AkashaAutomation.Worker.Hosting;
 
@@ -10,6 +11,7 @@ public sealed class WorkerStatusProvider(
     EmergencyStopController emergencyStop,
     IAutoPickController? autoPickController = null,
     IAutoDialogueController? autoDialogueController = null,
+    IQuickTeleportController? quickTeleportController = null,
     bool realInputEnabled = false)
 {
     private readonly object _errorGate = new();
@@ -57,6 +59,19 @@ public sealed class WorkerStatusProvider(
                     autoDialogue.LastFrameSequence,
                     autoDialogue.UpdatedAtUtc),
             };
+        var quickTeleport = quickTeleportController?.Status;
+        var quickTeleportStatus = quickTeleport is null
+            ? new FeatureStatus(false, false)
+            : new FeatureStatus(quickTeleport.Enabled, quickTeleport.IsRunning)
+            {
+                QuickTeleportRecognition = new QuickTeleportRecognitionStatus(
+                    quickTeleport.State,
+                    quickTeleport.LastCandidateText,
+                    quickTeleport.LastDecisionReason,
+                    quickTeleport.LastIntentSubmitted,
+                    quickTeleport.LastFrameSequence,
+                    quickTeleport.UpdatedAtUtc),
+            };
         return new WorkerStatus(
             ToProtocolState(stateMachine.State),
             CompanionProtocol.CurrentVersion,
@@ -73,7 +88,8 @@ public sealed class WorkerStatusProvider(
             new SubsystemStatus("not_started", false),
             new FeatureStatuses(
                 autoPickStatus,
-                autoDialogueStatus),
+                autoDialogueStatus,
+                quickTeleportStatus),
             lastError);
     }
 

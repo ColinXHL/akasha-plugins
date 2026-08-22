@@ -4,6 +4,7 @@ using AkashaAutomation.Core.Abstractions;
 using AkashaAutomation.Core.GameContext;
 using AkashaAutomation.Core.Input;
 using AkashaAutomation.Core.Recognition;
+using AkashaAutomation.Core.Scheduling;
 using AkashaAutomation.Features.AutoPick;
 using AkashaAutomation.Features.AutoDialogue;
 using AkashaAutomation.Worker.Bridge;
@@ -30,13 +31,16 @@ public class WorkerApplicationTests
         autoPickController.SetEnabled(true);
         var autoDialogueController = new AutoDialogueController(new RootedAssetPathResolver(AppContext.BaseDirectory));
         autoDialogueController.SetEnabled(true);
+        var extensionControl = new TrackingFeatureControl("extension", true);
         var application = new WorkerApplication(
             parent,
-            new WorkerRuntime(autoPickController: autoPickController, autoDialogueController: autoDialogueController),
+            new WorkerRuntime(
+                autoPickController: autoPickController,
+                autoDialogueController: autoDialogueController,
+                featureControls: new AutomationFeatureControls(
+                    [autoPickController, autoDialogueController, extensionControl])),
             NullLogger<WorkerApplication>.Instance,
-            inputArbiter: inputArbiter,
-            autoPickController: autoPickController,
-            autoDialogueController: autoDialogueController);
+            inputArbiter: inputArbiter);
         using var timeout = new CancellationTokenSource(TestTimeout);
 
         var workerTask = application.RunAsync(options, timeout.Token);
@@ -93,6 +97,7 @@ public class WorkerApplicationTests
         Assert.Equal(1, inputArbiter.EmergencyStopCount);
         Assert.False(autoPickController.Options.Enabled);
         Assert.False(autoDialogueController.Options.Enabled);
+        Assert.False(extensionControl.IsEnabled);
 
         await protocol.WriteAsync(
             server,
@@ -674,5 +679,14 @@ public class WorkerApplicationTests
             Interlocked.Increment(ref _emergencyStopCount);
             return ValueTask.CompletedTask;
         }
+    }
+
+    private sealed class TrackingFeatureControl(string featureId, bool enabled) : IAutomationFeatureControl
+    {
+        public string FeatureId => featureId;
+
+        public bool IsEnabled { get; private set; } = enabled;
+
+        public void SetEnabled(bool enabledValue) => IsEnabled = enabledValue;
     }
 }

@@ -28,6 +28,10 @@ public sealed class AutoDialogueController : IAutoDialogueController
         get { lock (_gate) return _configuration.Options; }
     }
 
+    public string FeatureId => AutoDialogueFeature.FeatureId;
+
+    public bool IsEnabled => Options.Enabled;
+
     public AutoDialogueRuntimeStatus Status
     {
         get { lock (_gate) return _status; }

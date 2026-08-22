@@ -137,6 +137,44 @@ public sealed class ReplayAndRecognitionTests : IDisposable
     }
 
     [Fact]
+    public void OpenCvTemplateMatcher_FindsAllDistinctTemplatesInsideRoi()
+    {
+        using var targetMat = new Mat(45, 70, MatType.CV_8UC3, Scalar.Black);
+        using var templateMat = new Mat(4, 5, MatType.CV_8UC3, Scalar.Black);
+        templateMat.Set(0, 0, new Vec3b(255, 255, 255));
+        templateMat.Set(1, 3, new Vec3b(40, 120, 220));
+        templateMat.Set(3, 4, new Vec3b(180, 20, 80));
+        foreach (var location in new[] { new Rect(14, 10, 5, 4), new Rect(48, 29, 5, 4) })
+        {
+            using var destination = new Mat(targetMat, location);
+            templateMat.CopyTo(destination);
+        }
+
+        using var target = CapturedFrame.TakeOwnership(targetMat.Clone(), 1, DateTimeOffset.UnixEpoch, "target");
+        using var template = CapturedFrame.TakeOwnership(templateMat.Clone(), 1, DateTimeOffset.UnixEpoch, "template");
+        var matcher = new OpenCvTemplateMatcher();
+
+        var matches = matcher.MatchAll(
+            target,
+            template,
+            new RegionOfInterest(8, 5, 55, 35),
+            0.99);
+        var limited = matcher.MatchAll(target, template, threshold: 0.99, maximumMatches: 1);
+
+        Assert.Equal(2, matches.Count);
+        Assert.All(matches, match =>
+        {
+            Assert.True(match.IsMatch);
+            Assert.True(match.Confidence >= 0.99);
+            Assert.NotNull(match.Region);
+        });
+        Assert.Equal(
+            [new RegionOfInterest(14, 10, 5, 4), new RegionOfInterest(48, 29, 5, 4)],
+            matches.Select(match => match.Region!.Value).OrderBy(region => region.X).ToArray());
+        Assert.Single(limited);
+    }
+
+    [Fact]
     public void RepeatedTemplateMatching_DoesNotLeakOwnedFrames()
     {
         var baseline = CapturedFrame.ActiveOwnedFrames;
@@ -156,6 +194,11 @@ public sealed class ReplayAndRecognitionTests : IDisposable
         for (var iteration = 0; iteration < 200; iteration++)
         {
             _ = matcher.Match(target, template, new RegionOfInterest(0, 0, 40, 40));
+            _ = matcher.MatchAll(
+                target,
+                template,
+                new RegionOfInterest(0, 0, 40, 40),
+                maximumMatches: 4);
         }
 
         Assert.Equal(expectedDuringTest, CapturedFrame.ActiveOwnedFrames);
@@ -388,6 +431,115 @@ public sealed class SchedulerTests : IDisposable
             GameContextSnapshot context,
             CancellationToken cancellationToken = default) =>
             ValueTask.FromResult(decision(frame));
+    }
+}
+
+public sealed class ExtensibilityContractTests
+{
+    [Fact]
+    public void FeatureControls_DisableEveryRegisteredFeatureWithoutKnowingConcreteTypes()
+    {
+        var first = new TestFeatureControl("first", true);
+        var second = new TestFeatureControl("second", false);
+        var controls = new AutomationFeatureControls([first, second]);
+
+        Assert.True(controls.AnyEnabled);
+
+        controls.DisableAll();
+
+        Assert.False(controls.AnyEnabled);
+        Assert.False(first.IsEnabled);
+        Assert.False(second.IsEnabled);
+        Assert.Equal(1, first.SetEnabledCount);
+        Assert.Equal(1, second.SetEnabledCount);
+    }
+
+    [Fact]
+    public void FeatureControls_RejectDuplicateFeatureIds()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+            new AutomationFeatureControls(
+            [
+                new TestFeatureControl("duplicate", false),
+                new TestFeatureControl("duplicate", true),
+            ]));
+    }
+
+    [Fact]
+    public async Task CompositeClassifier_UsesDetectorPriorityAndStopsAfterMatch()
+    {
+        var low = new TestUiDetector("low", 10, GameUiCategory.Talk);
+        var high = new TestUiDetector("high", 20, GameUiCategory.BigMap);
+        var classifier = new CompositeGameUiContextClassifier([low, high]);
+        using var frame = CapturedFrame.TakeOwnership(
+            new Mat(1, 1, MatType.CV_8UC3, Scalar.Black),
+            1,
+            DateTimeOffset.UnixEpoch,
+            "classification");
+
+        var category = await classifier.ClassifyAsync(
+            frame,
+            ClockAndInputTests.CreateForegroundContext());
+
+        Assert.Equal(GameUiCategory.BigMap, category);
+        Assert.Equal(1, high.CallCount);
+        Assert.Equal(0, low.CallCount);
+    }
+
+    [Fact]
+    public async Task CompositeClassifier_ReturnsUnknownWhenNoDetectorMatches()
+    {
+        var detector = new TestUiDetector("none", 1, null);
+        var classifier = new CompositeGameUiContextClassifier([detector]);
+        using var frame = CapturedFrame.TakeOwnership(
+            new Mat(1, 1, MatType.CV_8UC3, Scalar.Black),
+            1,
+            DateTimeOffset.UnixEpoch,
+            "classification");
+
+        var category = await classifier.ClassifyAsync(
+            frame,
+            ClockAndInputTests.CreateForegroundContext());
+
+        Assert.Equal(GameUiCategory.Unknown, category);
+        Assert.Equal(1, detector.CallCount);
+    }
+
+    private sealed class TestFeatureControl(string featureId, bool enabled) : IAutomationFeatureControl
+    {
+        public string FeatureId => featureId;
+
+        public bool IsEnabled { get; private set; } = enabled;
+
+        public int SetEnabledCount { get; private set; }
+
+        public void SetEnabled(bool enabledValue)
+        {
+            SetEnabledCount++;
+            IsEnabled = enabledValue;
+        }
+    }
+
+    private sealed class TestUiDetector(
+        string id,
+        int priority,
+        GameUiCategory? category) : IGameUiContextDetector
+    {
+        public string Id => id;
+
+        public int Priority => priority;
+
+        public int CallCount { get; private set; }
+
+        public ValueTask<GameUiCategory?> DetectAsync(
+            CapturedFrame frame,
+            GameContextSnapshot context,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            CallCount++;
+            return ValueTask.FromResult(category);
+        }
     }
 }
 

@@ -701,7 +701,7 @@ public sealed class AutoDialogueFeatureTests
                 arbiter,
                 diagnostics,
                 clock,
-                recognizer);
+                new CompositeGameUiContextClassifier([recognizer]));
             return Task.FromResult(new DialogueScenario(directory, capture, recognizer, ocr, voiceWaiter, controller, input, scheduler));
         }
 

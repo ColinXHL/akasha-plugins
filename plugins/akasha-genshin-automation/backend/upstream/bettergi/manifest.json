@@ -24,6 +24,23 @@
       "Fischless.WindowsInput/InputBuilder.cs"
     ]
   },
+  "supplementalSources": [
+    {
+      "id": "quick-teleport-0.63.0",
+      "repository": "https://github.com/babalae/better-genshin-impact.git",
+      "branch": "refs/tags/0.63.0",
+      "commit": "83299856bc1935017f13f1e8ed10b538eae3d9e4",
+      "version": "0.63.0",
+      "lastReviewedCommit": "83299856bc1935017f13f1e8ed10b538eae3d9e4",
+      "sourcePaths": [
+        "BetterGenshinImpact/GameTask/QuickTeleport/QuickTeleportConfig.cs",
+        "BetterGenshinImpact/GameTask/QuickTeleport/QuickTeleportTrigger.cs",
+        "BetterGenshinImpact/GameTask/QuickTeleport/Assets/Recognition.json",
+        "BetterGenshinImpact/GameTask/QuickTeleport/Assets/QuickTeleportAssets.cs",
+        "BetterGenshinImpact/GameTask/Common/BgiVision/BvStatus.cs"
+      ]
+    }
+  ],
   "runtimeArtifact": {
     "version": "0.62.0",
     "releaseCommit": "92b8beab53da3a1f86d625914c10d180fb05b0cd",
@@ -35,15 +52,30 @@
     "verifiedSample": "Installed BetterGI 0.62.0 distribution and official BetterGI_v0.62.0.7z",
     "note": "The archive size and GitHub SHA-256 digest were verified, then all declared files were selectively extracted and matched the committed files byte-for-byte."
   },
+  "supplementalRuntimeArtifacts": [
+    {
+      "id": "quick-teleport-0.63.0",
+      "version": "0.63.0",
+      "releaseCommit": "83299856bc1935017f13f1e8ed10b538eae3d9e4",
+      "status": "official-release-verified",
+      "downloadUrl": "https://github.com/babalae/better-genshin-impact/releases/download/0.63.0/BetterGI_v0.63.0.7z",
+      "archiveRoot": "BetterGI",
+      "size": 438814068,
+      "sha256": "1937d285592eccadeec41c411219f2493b37af83720b45277e3debe0cf7d836c",
+      "verifiedSample": "Official BetterGI_v0.63.0.7z release artifact",
+      "note": "The GitHub release digest and archive size were verified before selectively extracting the QuickTeleport templates and default pickup blacklist."
+    }
+  ],
   "assets": [
     {
       "id": "pick-default-blacklist",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
       "sourcePath": "Assets/Config/Pick/default_pick_black_lists.json",
       "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Config/Pick/default_pick_black_lists.json",
-      "sha256": "1129650653eed1ec7e81676b3f616895feb9433ab616efc98ac360232c7e7ea9",
+      "sha256": "f7ddbfddbc02bbc2bf510fa59b1d493934efe14a509903a8adce8c9645c2f64b",
       "kind": "json-string-list",
-      "count": 4914,
-      "uniqueCount": 4891
+      "count": 4918,
+      "uniqueCount": 4895
     },
     {
       "id": "autopick-key-e",
@@ -359,6 +391,150 @@
       "sha256": "316598f1b51cd63e8add1cebce5bb2f7580b585839ef8a6e8608b39c6b3e40f3",
       "kind": "json",
       "size": 14790
+    },
+    {
+      "id": "quickteleport-button",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
+      "sourcePath": "GameTask/QuickTeleport/Assets/1920x1080/GoTeleport.png",
+      "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/1920x1080/GoTeleport.png",
+      "sha256": "53ffe9ce0d34f6446f39f6d4d12bfe84640b012cfea24fe13b0c1e416483a3f1",
+      "kind": "png",
+      "size": 1559
+    },
+    {
+      "id": "quickteleport-map-scale-button",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
+      "sourcePath": "GameTask/QuickTeleport/Assets/1920x1080/MapScaleButton.png",
+      "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/1920x1080/MapScaleButton.png",
+      "sha256": "18ec1ca976a1359de9967acf41828bb96795c9ac93a5cd198502746160cf6a7b",
+      "kind": "png",
+      "size": 1866
+    },
+    {
+      "id": "quickteleport-map-close-button",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
+      "sourcePath": "GameTask/QuickTeleport/Assets/1920x1080/MapCloseButton.png",
+      "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/1920x1080/MapCloseButton.png",
+      "sha256": "523c4a02acd67bd45c5d5fbf4eee2d0b3e264408ef98197cf47d0c7c70f05b4a",
+      "kind": "png",
+      "size": 1616
+    },
+    {
+      "id": "quickteleport-map-settings-button",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
+      "sourcePath": "GameTask/QuickTeleport/Assets/1920x1080/MapSettingsButton.png",
+      "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/1920x1080/MapSettingsButton.png",
+      "sha256": "dadfbe3595324a16a0a0f5479170c7ba58ac33b341164596d45ddb62a7ad74d3",
+      "kind": "png",
+      "size": 1665
+    },
+    {
+      "id": "quickteleport-map-choose",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
+      "sourcePath": "GameTask/QuickTeleport/Assets/1920x1080/MapChoose.png",
+      "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/1920x1080/MapChoose.png",
+      "sha256": "7a1abd6641c9f59efdd5c0af167df88dd89d6038b5c4fad3efcab87e4fe53262",
+      "kind": "png",
+      "size": 3989
+    },
+    {
+      "id": "quickteleport-waypoint",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
+      "sourcePath": "GameTask/QuickTeleport/Assets/1920x1080/TeleportWaypoint.png",
+      "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/1920x1080/TeleportWaypoint.png",
+      "sha256": "92d82990fdda8ed698e099c9ff988f6034a845f4b186e27a145f5f9973b3e8aa",
+      "kind": "png",
+      "size": 2212
+    },
+    {
+      "id": "quickteleport-statue-of-the-seven",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
+      "sourcePath": "GameTask/QuickTeleport/Assets/1920x1080/StatueOfTheSeven.png",
+      "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/1920x1080/StatueOfTheSeven.png",
+      "sha256": "146e24366459dd6ed24f64c3dd4405a720e6ace5a3cd564ddb1c30b1abb60be2",
+      "kind": "png",
+      "size": 4029
+    },
+    {
+      "id": "quickteleport-domain",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
+      "sourcePath": "GameTask/QuickTeleport/Assets/1920x1080/Domain.png",
+      "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/1920x1080/Domain.png",
+      "sha256": "69f0dbd1fce30c4cdcc5927fe69cccb611cf4578a2467290b188fe20fb38f0e7",
+      "kind": "png",
+      "size": 1553
+    },
+    {
+      "id": "quickteleport-domain-2",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
+      "sourcePath": "GameTask/QuickTeleport/Assets/1920x1080/Domain2.png",
+      "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/1920x1080/Domain2.png",
+      "sha256": "eaf7d24d5f92fc4d0897771e140093f3e5cfc28535b26edd0c7b41aa4bc10b2a",
+      "kind": "png",
+      "size": 1078
+    },
+    {
+      "id": "quickteleport-obsidian-totem-pole",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
+      "sourcePath": "GameTask/QuickTeleport/Assets/1920x1080/ObsidianTotemPole.png",
+      "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/1920x1080/ObsidianTotemPole.png",
+      "sha256": "708e3800a07bc1c52795b550abbb750dfec619cbfd308280eab23e284bcca870",
+      "kind": "png",
+      "size": 2987
+    },
+    {
+      "id": "quickteleport-portable-waypoint",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
+      "sourcePath": "GameTask/QuickTeleport/Assets/1920x1080/PortableWaypoint.png",
+      "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/1920x1080/PortableWaypoint.png",
+      "sha256": "9f17a4914dbab07b3107aa059ad40d3b562147d8d3c4e5b0dc50cfdd8f64e289",
+      "kind": "png",
+      "size": 2462
+    },
+    {
+      "id": "quickteleport-mansion",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
+      "sourcePath": "GameTask/QuickTeleport/Assets/1920x1080/Mansion.png",
+      "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/1920x1080/Mansion.png",
+      "sha256": "f4bd8513e34dfa4fac0eb799276fb6035fcfb480cddbd15c1177b3dcb4f05415",
+      "kind": "png",
+      "size": 2798
+    },
+    {
+      "id": "quickteleport-sub-space-waypoint",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
+      "sourcePath": "GameTask/QuickTeleport/Assets/1920x1080/SubSpaceWaypoint.png",
+      "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/1920x1080/SubSpaceWaypoint.png",
+      "sha256": "ef90851e5b1c137216ee9638b9e839afc297e32f627538995227de3ea467dbfb",
+      "kind": "png",
+      "size": 2526
+    },
+    {
+      "id": "quickteleport-nod-krai-meeting-point",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
+      "sourcePath": "GameTask/QuickTeleport/Assets/1920x1080/NodKraiMeetingPoint.png",
+      "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/1920x1080/NodKraiMeetingPoint.png",
+      "sha256": "86582d880349ba8027d3a4dc1a2caed586fba4ad55a3292568294f35946fd2c9",
+      "kind": "png",
+      "size": 2945
+    },
+    {
+      "id": "quickteleport-tablet-of-tona",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
+      "sourcePath": "GameTask/QuickTeleport/Assets/1920x1080/TabletOfTona.png",
+      "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/1920x1080/TabletOfTona.png",
+      "sha256": "37b35bf9c9a98c4a72f2c837ae439f0a44ded79a629429ce8ddf83b5e8878fe8",
+      "kind": "png",
+      "size": 3712
+    },
+    {
+      "id": "quickteleport-moon-tower",
+      "runtimeArtifactId": "quick-teleport-0.63.0",
+      "sourcePath": "GameTask/QuickTeleport/Assets/1920x1080/MarkTransPointMoonTower.png",
+      "targetPath": "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/1920x1080/MarkTransPointMoonTower.png",
+      "sha256": "d209385d5de97cae504611b51600c955a473ff97f7b7e3b5441a337135cffbd6",
+      "kind": "png",
+      "size": 3420
     }
   ],
   "localPatches": [
@@ -376,6 +552,11 @@
       "scope": "WindowsInput",
       "decision": "translate",
       "description": "Preserve BetterGI SendInput keyboard compatibility by supplying virtual key plus MapVirtualKey scan code, extended-key flags and batched key-down/key-up, while retaining Akasha foreground validation, arbitration and emergency-stop ownership."
+    },
+    {
+      "scope": "QuickTeleport",
+      "decision": "translate",
+      "description": "Preserve BetterGI 0.63.0 BigMap detection, 300 ms scan throttle, teleport-button priority, unselected-map guards, 11 candidate icon templates, white-text OCR validation and 200/50 ms defaults while translating sleeps and direct clicks into an IClock-driven single-frame state machine. HDR, WGC-specific thresholds and hold-to-arm hotkey behavior are deferred."
     }
   ]
 }

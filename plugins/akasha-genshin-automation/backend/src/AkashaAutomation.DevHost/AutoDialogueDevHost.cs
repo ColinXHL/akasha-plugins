@@ -62,6 +62,7 @@ public sealed class AutoDialogueDevHost(DevHostOptions options)
             hangout,
             handlers,
             clock);
+        var contextClassifier = new CompositeGameUiContextClassifier([recognizer]);
         var scheduler = new SingleFrameScheduler(
             capture,
             contextProvider,
@@ -69,7 +70,7 @@ public sealed class AutoDialogueDevHost(DevHostOptions options)
             arbiter,
             diagnostics,
             clock,
-            recognizer);
+            contextClassifier);
 
         Console.WriteLine("Akasha Automation AutoDialogue DevHost");
         Console.WriteLine("模式: OBSERVE-ONLY（不会发送任何键盘或鼠标输入）");

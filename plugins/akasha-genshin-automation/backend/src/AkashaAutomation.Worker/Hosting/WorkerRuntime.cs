@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 using AkashaAutomation.Features.AutoPick;
 using AkashaAutomation.Features.AutoDialogue;
+using AkashaAutomation.Core.Scheduling;
+using AkashaAutomation.Features.QuickTeleport;
 
 namespace AkashaAutomation.Worker.Hosting;
 
@@ -13,18 +15,27 @@ public sealed class WorkerRuntime
         Func<WorkerStatusProvider, EmergencyStopController, IWorkerCommandHandler>? commandHandlerFactory = null,
         IAutoPickController? autoPickController = null,
         IAutoDialogueController? autoDialogueController = null,
+        IQuickTeleportController? quickTeleportController = null,
+        AutomationFeatureControls? featureControls = null,
         bool realInputEnabled = false)
     {
         StateMachine = new WorkerStateMachine();
         EmergencyStop = new EmergencyStopController();
+        FeatureControls = featureControls ?? new AutomationFeatureControls([]);
         StatusProvider = new WorkerStatusProvider(
             StateMachine,
             EmergencyStop,
             autoPickController,
             autoDialogueController,
+            quickTeleportController,
             realInputEnabled);
         CommandHandler = commandHandlerFactory?.Invoke(StatusProvider, EmergencyStop)
-                         ?? new WorkerCommandHandler(StatusProvider, EmergencyStop, autoPickController, autoDialogueController);
+                         ?? new WorkerCommandHandler(
+                             StatusProvider,
+                             EmergencyStop,
+                             autoPickController,
+                             autoDialogueController,
+                             quickTeleportController);
         CommandQueue = new WorkerCommandQueue(
             CommandHandler,
             commandQueueCapacity,
@@ -41,6 +52,8 @@ public sealed class WorkerRuntime
     public WorkerStateMachine StateMachine { get; }
 
     public EmergencyStopController EmergencyStop { get; }
+
+    public AutomationFeatureControls FeatureControls { get; }
 
     public WorkerStatusProvider StatusProvider { get; }
 

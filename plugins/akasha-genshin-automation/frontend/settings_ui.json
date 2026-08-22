@@ -14,6 +14,12 @@
           "key": "autoDialogueEnabled",
           "label": "自动剧情",
           "default": false
+        },
+        {
+          "type": "checkbox",
+          "key": "quickTeleportEnabled",
+          "label": "快速传送",
+          "default": false
         }
       ]
     },
@@ -31,6 +37,12 @@
           "key": "autoDialogueHotkey",
           "label": "切换自动剧情",
           "default": "F12"
+        },
+        {
+          "type": "hotkey",
+          "key": "quickTeleportHotkey",
+          "label": "切换快速传送",
+          "default": "F10"
         }
       ]
     },
@@ -175,6 +187,31 @@
               "key": "autoReExploreEnabled",
               "label": "自动重新派遣",
               "default": true
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": "快速传送",
+          "items": [
+            {
+              "type": "number",
+              "key": "teleportListClickDelayMilliseconds",
+              "label": "候选地点点击延迟（毫秒）",
+              "description": "识别到多个地点候选后，等待指定时间并重新确认最上方有效项。",
+              "default": 200,
+              "min": 0,
+              "max": 5000,
+              "step": 50
+            },
+            {
+              "type": "number",
+              "key": "waitTeleportPanelDelayMilliseconds",
+              "label": "详情面板等待时间（毫秒）",
+              "default": 50,
+              "min": 0,
+              "max": 5000,
+              "step": 50
             }
           ]
         }

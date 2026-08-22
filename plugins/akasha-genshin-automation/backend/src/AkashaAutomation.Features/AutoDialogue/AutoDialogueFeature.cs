@@ -167,6 +167,11 @@ public sealed class AutoDialogueFeature : IAutomationFeature
 
         _talkStartedUtc = null;
         CancelWait();
+        if (context.IsBigMap)
+        {
+            return NoAction(frame, context, [], "big_map_active");
+        }
+
         if (now < _nextActionUtc)
         {
             return NoAction(frame, context, [], "action_cooldown");

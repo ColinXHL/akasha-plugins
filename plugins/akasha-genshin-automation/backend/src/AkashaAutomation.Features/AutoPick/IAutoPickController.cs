@@ -1,16 +1,15 @@
 using AkashaAutomation.BetterGiPort.Upstream.AutoPick;
+using AkashaAutomation.Core.Scheduling;
 
 namespace AkashaAutomation.Features.AutoPick;
 
-public interface IAutoPickController
+public interface IAutoPickController : IAutomationFeatureControl
 {
     AutoPickOptions Options { get; }
 
     AutoPickRuntimeStatus Status { get; }
 
     AutoPickConfiguration Snapshot { get; }
-
-    void SetEnabled(bool enabled);
 
     void SetOptions(AutoPickOptions options);
 

@@ -14,7 +14,7 @@ public class BetterGiAssetTests
 {
     private static readonly AssetExpectation[] Expectations =
     [
-        new(BetterGiAssetPaths.DefaultPickBlacklist, "1129650653eed1ec7e81676b3f616895feb9433ab616efc98ac360232c7e7ea9", 4914, 4891),
+        new(BetterGiAssetPaths.DefaultPickBlacklist, "f7ddbfddbc02bbc2bf510fa59b1d493934efe14a509903a8adce8c9645c2f64b", 4918, 4895),
         new(BetterGiAssetPaths.AutoPickKeyE, "09cc25ef17a7aab56f147f40f4a1373ae3bce06fc966929cc8d34ef85e61cd55"),
         new(BetterGiAssetPaths.AutoPickKeyF, "ce0100ebf90a4c98e6b34b5ee3777d973c9ae05322972d552fc718817e66271b"),
         new(BetterGiAssetPaths.AutoPickKeyG, "724edac6d0da519ac44d7a973db51990a95cf9b80005d1973caaaabb684543d7"),
@@ -54,6 +54,22 @@ public class BetterGiAssetTests
         new(BetterGiAssetPaths.SileroVadReadme, "3792d8803e6c91760dbb05bbe7d281175d7eb2b4c8c77c7866d00251ae7bf249"),
         new(BetterGiAssetPaths.SileroVadModel, "1a153a22f4509e292a94e67d6f9b85e8deb25b4988682b7e174c65279d8788e3"),
         new(BetterGiAssetPaths.HangoutOptions, "316598f1b51cd63e8add1cebce5bb2f7580b585839ef8a6e8608b39c6b3e40f3"),
+        new(BetterGiAssetPaths.QuickTeleportButton, "53ffe9ce0d34f6446f39f6d4d12bfe84640b012cfea24fe13b0c1e416483a3f1"),
+        new(BetterGiAssetPaths.QuickTeleportMapScaleButton, "18ec1ca976a1359de9967acf41828bb96795c9ac93a5cd198502746160cf6a7b"),
+        new(BetterGiAssetPaths.QuickTeleportMapCloseButton, "523c4a02acd67bd45c5d5fbf4eee2d0b3e264408ef98197cf47d0c7c70f05b4a"),
+        new(BetterGiAssetPaths.QuickTeleportMapSettingsButton, "dadfbe3595324a16a0a0f5479170c7ba58ac33b341164596d45ddb62a7ad74d3"),
+        new(BetterGiAssetPaths.QuickTeleportMapChoose, "7a1abd6641c9f59efdd5c0af167df88dd89d6038b5c4fad3efcab87e4fe53262"),
+        new(BetterGiAssetPaths.QuickTeleportWaypoint, "92d82990fdda8ed698e099c9ff988f6034a845f4b186e27a145f5f9973b3e8aa"),
+        new(BetterGiAssetPaths.QuickTeleportStatueOfTheSeven, "146e24366459dd6ed24f64c3dd4405a720e6ace5a3cd564ddb1c30b1abb60be2"),
+        new(BetterGiAssetPaths.QuickTeleportDomain, "69f0dbd1fce30c4cdcc5927fe69cccb611cf4578a2467290b188fe20fb38f0e7"),
+        new(BetterGiAssetPaths.QuickTeleportDomain2, "eaf7d24d5f92fc4d0897771e140093f3e5cfc28535b26edd0c7b41aa4bc10b2a"),
+        new(BetterGiAssetPaths.QuickTeleportObsidianTotemPole, "708e3800a07bc1c52795b550abbb750dfec619cbfd308280eab23e284bcca870"),
+        new(BetterGiAssetPaths.QuickTeleportPortableWaypoint, "9f17a4914dbab07b3107aa059ad40d3b562147d8d3c4e5b0dc50cfdd8f64e289"),
+        new(BetterGiAssetPaths.QuickTeleportMansion, "f4bd8513e34dfa4fac0eb799276fb6035fcfb480cddbd15c1177b3dcb4f05415"),
+        new(BetterGiAssetPaths.QuickTeleportSubSpaceWaypoint, "ef90851e5b1c137216ee9638b9e839afc297e32f627538995227de3ea467dbfb"),
+        new(BetterGiAssetPaths.QuickTeleportNodKraiMeetingPoint, "86582d880349ba8027d3a4dc1a2caed586fba4ad55a3292568294f35946fd2c9"),
+        new(BetterGiAssetPaths.QuickTeleportTabletOfTona, "37b35bf9c9a98c4a72f2c837ae439f0a44ded79a629429ce8ddf83b5e8878fe8"),
+        new(BetterGiAssetPaths.QuickTeleportMarkTransPointMoonTower, "d209385d5de97cae504611b51600c955a473ff97f7b7e3b5441a337135cffbd6"),
     ];
 
     [Fact]
@@ -156,6 +172,36 @@ public class BetterGiAssetTests
         Assert.Equal(
             "https://github.com/babalae/better-genshin-impact/releases/download/0.62.0/BetterGI_v0.62.0.7z",
             artifact.GetProperty("downloadUrl").GetString());
+    }
+
+    [Fact]
+    public void QuickTeleportOfficialReleaseArtifact_ShouldBePinnedSeparately()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var manifestPath = Path.Combine(repositoryRoot, "upstream", "bettergi", "manifest.json");
+        using var manifest = JsonDocument.Parse(File.ReadAllBytes(manifestPath));
+        var artifact = manifest.RootElement
+            .GetProperty("supplementalRuntimeArtifacts")
+            .EnumerateArray()
+            .Single(item => item.GetProperty("id").GetString() == "quick-teleport-0.63.0");
+        var source = manifest.RootElement
+            .GetProperty("supplementalSources")
+            .EnumerateArray()
+            .Single(item => item.GetProperty("id").GetString() == "quick-teleport-0.63.0");
+
+        Assert.Equal("0.63.0", artifact.GetProperty("version").GetString());
+        Assert.Equal("83299856bc1935017f13f1e8ed10b538eae3d9e4", artifact.GetProperty("releaseCommit").GetString());
+        Assert.Equal(438814068, artifact.GetProperty("size").GetInt64());
+        Assert.Equal("1937d285592eccadeec41c411219f2493b37af83720b45277e3debe0cf7d836c", artifact.GetProperty("sha256").GetString());
+        Assert.Equal("83299856bc1935017f13f1e8ed10b538eae3d9e4", source.GetProperty("commit").GetString());
+        var defaultBlacklist = manifest.RootElement
+            .GetProperty("assets")
+            .EnumerateArray()
+            .Single(item => item.GetProperty("id").GetString() == "pick-default-blacklist");
+        Assert.Equal("quick-teleport-0.63.0", defaultBlacklist.GetProperty("runtimeArtifactId").GetString());
+        Assert.Contains(
+            source.GetProperty("sourcePaths").EnumerateArray().Select(item => item.GetString()),
+            path => path!.EndsWith("QuickTeleportTrigger.cs", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -262,6 +308,73 @@ public class BetterGiAssetTests
         }
     }
 
+    [Fact]
+    public void ImportScript_ShouldSelectSupplementalArtifactAssets()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var scriptPath = Path.Combine(repositoryRoot, "scripts", "Import-BetterGiAssets.ps1");
+        var temporaryRoot = Path.Combine(Path.GetTempPath(), $"akasha-import-supplement-{Guid.NewGuid():N}");
+        var sourceRoot = Path.Combine(temporaryRoot, "source");
+        var sourceAsset = Path.Combine(sourceRoot, "GameTask", "QuickTeleport", "button.png");
+        var targetAsset = Path.Combine(
+            temporaryRoot,
+            "src",
+            "AkashaAutomation.BetterGiPort",
+            "Assets",
+            "Recognition",
+            "QuickTeleport",
+            "button.png");
+        var manifestPath = Path.Combine(temporaryRoot, "upstream", "bettergi", "manifest.json");
+
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(sourceAsset)!);
+            Directory.CreateDirectory(Path.GetDirectoryName(targetAsset)!);
+            Directory.CreateDirectory(Path.GetDirectoryName(manifestPath)!);
+            File.WriteAllBytes(sourceAsset, [1, 2, 3, 4]);
+            File.Copy(sourceAsset, targetAsset);
+            var sha256 = BetterGiAssetIntegrity.ComputeSha256(sourceAsset);
+            File.WriteAllText(
+                manifestPath,
+                JsonSerializer.Serialize(new
+                {
+                    schemaVersion = 1,
+                    runtimeArtifact = new { sha256 = "" },
+                    supplementalRuntimeArtifacts = new[]
+                    {
+                        new { id = "quick-teleport-0.63.0", sha256 = "" }
+                    },
+                    assets = new[]
+                    {
+                        new
+                        {
+                            runtimeArtifactId = "quick-teleport-0.63.0",
+                            sourcePath = "GameTask/QuickTeleport/button.png",
+                            targetPath = "src/AkashaAutomation.BetterGiPort/Assets/Recognition/QuickTeleport/button.png",
+                            sha256,
+                            kind = "png"
+                        }
+                    }
+                }));
+
+            var verify = RunImportScript(
+                scriptPath,
+                sourceRoot,
+                manifestPath,
+                verifyOnly: true,
+                artifactId: "quick-teleport-0.63.0");
+
+            Assert.Equal(0, verify.ExitCode);
+            Assert.Contains("Unchanged", verify.Output, StringComparison.Ordinal);
+            Assert.Contains("1", verify.Output, StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (Directory.Exists(temporaryRoot))
+                Directory.Delete(temporaryRoot, recursive: true);
+        }
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
@@ -295,7 +408,8 @@ public class BetterGiAssetTests
         string scriptPath,
         string sourceRoot,
         string manifestPath,
-        bool verifyOnly)
+        bool verifyOnly,
+        string? artifactId = null)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -312,6 +426,12 @@ public class BetterGiAssetTests
         startInfo.ArgumentList.Add(sourceRoot);
         startInfo.ArgumentList.Add("-ManifestPath");
         startInfo.ArgumentList.Add(manifestPath);
+        if (artifactId is not null)
+        {
+            startInfo.ArgumentList.Add("-ArtifactId");
+            startInfo.ArgumentList.Add(artifactId);
+        }
+
         if (verifyOnly)
             startInfo.ArgumentList.Add("-VerifyOnly");
 

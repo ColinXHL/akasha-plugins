@@ -2,6 +2,7 @@ using System.Text.Json;
 using AkashaAutomation.Worker.Bridge;
 using AkashaAutomation.Features.AutoPick;
 using AkashaAutomation.Features.AutoDialogue;
+using AkashaAutomation.Features.QuickTeleport;
 
 namespace AkashaAutomation.Worker.Hosting;
 
@@ -9,7 +10,8 @@ public sealed class WorkerCommandHandler(
     WorkerStatusProvider statusProvider,
     EmergencyStopController emergencyStop,
     IAutoPickController? autoPickController = null,
-    IAutoDialogueController? autoDialogueController = null) : IWorkerCommandHandler
+    IAutoDialogueController? autoDialogueController = null,
+    IQuickTeleportController? quickTeleportController = null) : IWorkerCommandHandler
 {
     public ValueTask<CompanionEnvelope> HandleAsync(
         WorkerCommandContext command,
@@ -156,6 +158,61 @@ public sealed class WorkerCommandHandler(
             catch (Exception exception) when (exception is JsonException or ArgumentException)
             {
                 return ValueTask.FromResult(InvalidPayloadResponse(request, "AutoDialogue"));
+            }
+        }
+
+        if (request.Method.Equals("features.quickTeleport.getOptions", StringComparison.Ordinal))
+        {
+            return quickTeleportController is null
+                ? ValueTask.FromResult(UnavailableResponse(request, "QuickTeleport"))
+                : ValueTask.FromResult(SuccessResponse(
+                    request,
+                    JsonSerializer.SerializeToElement(quickTeleportController.Options, CompanionProtocol.JsonOptions)));
+        }
+
+        if (request.Method.Equals("features.quickTeleport.setEnabled", StringComparison.Ordinal))
+        {
+            if (quickTeleportController is null)
+            {
+                return ValueTask.FromResult(UnavailableResponse(request, "QuickTeleport"));
+            }
+
+            if (request.Payload is not { } enabledPayload ||
+                !enabledPayload.TryGetProperty("enabled", out var enabledElement) ||
+                enabledElement.ValueKind is not JsonValueKind.True and not JsonValueKind.False)
+            {
+                return ValueTask.FromResult(InvalidPayloadResponse(request, "QuickTeleport"));
+            }
+
+            quickTeleportController.SetEnabled(enabledElement.GetBoolean());
+            return ValueTask.FromResult(SuccessResponse(
+                request,
+                JsonSerializer.SerializeToElement(quickTeleportController.Options, CompanionProtocol.JsonOptions)));
+        }
+
+        if (request.Method.Equals("features.quickTeleport.setOptions", StringComparison.Ordinal))
+        {
+            if (quickTeleportController is null)
+            {
+                return ValueTask.FromResult(UnavailableResponse(request, "QuickTeleport"));
+            }
+
+            try
+            {
+                var options = request.Payload?.Deserialize<QuickTeleportOptions>(CompanionProtocol.JsonOptions);
+                if (options is null)
+                {
+                    return ValueTask.FromResult(InvalidPayloadResponse(request, "QuickTeleport"));
+                }
+
+                quickTeleportController.SetOptions(options);
+                return ValueTask.FromResult(SuccessResponse(
+                    request,
+                    JsonSerializer.SerializeToElement(quickTeleportController.Options, CompanionProtocol.JsonOptions)));
+            }
+            catch (Exception exception) when (exception is JsonException or ArgumentException)
+            {
+                return ValueTask.FromResult(InvalidPayloadResponse(request, "QuickTeleport"));
             }
         }
 

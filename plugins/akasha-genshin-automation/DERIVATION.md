@@ -1,6 +1,6 @@
 # Source derivation
 
-Parts of the future automatic pickup and automatic dialogue implementation will be derived from BetterGI, licensed under GPL-3.0.
+Parts of the automatic pickup, automatic dialogue, and quick teleport implementation are derived from BetterGI, licensed under GPL-3.0.
 
 The initial source snapshot is pinned for provenance and future selective synchronization:
 
@@ -19,12 +19,11 @@ The following files were copied byte-for-byte from an installed BetterGI `0.62.0
 
 | BetterGI path | SHA-256 | Entries | Unique entries |
 |---|---|---:|---:|
-| `Assets/Config/Pick/default_pick_black_lists.json` | `1129650653eed1ec7e81676b3f616895feb9433ab616efc98ac360232c7e7ea9` | 4914 | 4891 |
 | `Assets/Config/Skip/default_pause_options.json` | `212962f57e0bb0c04d9c3af062be53ddd929573f0399bc29b4476ec646f2ef65` | 66 | 61 |
 | `Assets/Config/Skip/pause_options.json` | `fcc7d1e985862f0e3b0cc59cad7312642f7e96a318a73fc7646c093701a08b5b` | 5 | 5 |
 | `Assets/Config/Skip/select_options.json` | `8585ca3368566a6efe15ef52a816494ac2469470d7ac3b806d3d329cb4b36e88` | 1 | 1 |
 
-The authoritative machine-readable mapping is `upstream/bettergi/manifest.json`; `upstream/bettergi/hashes.json` is the package integrity inventory. No content changes were made to these four files. On 2026-07-14, the official release archive size and SHA-256 were verified, then all four declared files were selectively extracted from its `BetterGI/` archive root and matched the committed files byte-for-byte.
+The authoritative machine-readable mapping is `upstream/bettergi/manifest.json`; `upstream/bettergi/hashes.json` is the package integrity inventory. No content changes were made to these three files. On 2026-07-14, the official release archive size and SHA-256 were verified, then all three declared files were selectively extracted from its `BetterGI/` archive root and matched the committed files byte-for-byte. The default pickup blacklist was subsequently synchronized to the separately pinned BetterGI `0.63.0` artifact described below.
 
 ## Imported PaddleOCR V4 runtime
 
@@ -93,3 +92,40 @@ The local split is intentional:
 The Worker and DevHost continue to register only disabled/observe-only input services. Audio capture is released when AutoDialogue is disabled and before Worker shutdown acknowledgement.
 
 Future extraction work must add exact copied source files, models, copyright notices, material changes, and synchronization decisions here.
+
+## Imported QuickTeleport behavior and templates
+
+QuickTeleport is pinned independently to BetterGI `0.63.0`, source commit
+`83299856bc1935017f13f1e8ed10b538eae3d9e4`. This supplemental pin is intentional:
+the existing AutoPick and AutoSkip assets remain on the reviewed `0.62.0` runtime
+baseline, while QuickTeleport uses the later stable release where that feature was
+reviewed. The official `BetterGI_v0.63.0.7z` artifact has size `438814068` and
+SHA-256 `1937d285592eccadeec41c411219f2493b37af83720b45277e3debe0cf7d836c`.
+
+Sixteen PNG templates were selectively extracted byte-for-byte below
+`Assets/Recognition/QuickTeleport/1920x1080`: the teleport button, map scale,
+settings, close and selection markers, plus eleven candidate-location icons. Exact
+source/target mappings, sizes and per-file SHA-256 values are recorded in
+`upstream/bettergi/manifest.json` and mirrored in `upstream/bettergi/hashes.json`.
+`Import-BetterGiAssets.ps1 -ArtifactId quick-teleport-0.63.0` reproduces or verifies
+this supplemental asset set.
+
+The default pickup blacklist was also synchronized byte-for-byte from the same
+official `0.63.0` artifact. It contains 4918 entries (4895 unique entries) and has
+SHA-256 `f7ddbfddbc02bbc2bf510fa59b1d493934efe14a509903a8adce8c9645c2f64b`.
+Keeping it in the supplemental artifact set makes the update reproducible while
+user-configured exact and fuzzy blacklist entries remain outside the package and
+continue to be preserved across plugin updates.
+
+The local implementation translates the upstream 300 ms scan limit, big-map UI
+guards, direct teleport-button path, top-to-bottom candidate matching, white-text
+OCR validation, 200 ms candidate delay, and 50 ms detail-panel delay. It replaces
+BetterGI sleeps and direct input with a scheduler-driven state machine and a single
+`AutomationIntent` per frame. Recognition lives in `BetterGiPort`, while options,
+state and intent production live in `Features/QuickTeleport`; companion commands
+and UI settings remain transport concerns in the Worker and frontend.
+
+The first release supports the Worker's BitBlt, non-HDR, 16:9 capture path. BetterGI's
+HDR threshold, WGC-specific validation and hold-to-arm shortcut semantics are not
+included. The upstream underground/transparent helper images are also not imported
+because they are not used by the reviewed QuickTeleport execution path.

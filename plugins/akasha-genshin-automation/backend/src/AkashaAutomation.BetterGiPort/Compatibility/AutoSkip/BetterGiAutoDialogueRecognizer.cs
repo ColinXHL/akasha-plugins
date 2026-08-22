@@ -10,7 +10,7 @@ using OpenCvSharp;
 
 namespace AkashaAutomation.BetterGiPort.Compatibility.AutoSkip;
 
-public sealed partial class BetterGiAutoDialogueRecognizer : IGameUiContextClassifier, IDisposable
+public sealed partial class BetterGiAutoDialogueRecognizer : IGameUiContextDetector, IDisposable
 {
     public const double DefaultThreshold = 0.8;
     private readonly ITemplateMatcher _templateMatcher;
@@ -30,7 +30,11 @@ public sealed partial class BetterGiAutoDialogueRecognizer : IGameUiContextClass
         _ocrEngine = ocrEngine;
     }
 
-    public ValueTask<GameUiCategory> ClassifyAsync(
+    public string Id => "bettergi.talk";
+
+    public int Priority => 100;
+
+    public ValueTask<GameUiCategory?> DetectAsync(
         CapturedFrame frame,
         GameContextSnapshot context,
         CancellationToken cancellationToken = default)
@@ -38,7 +42,7 @@ public sealed partial class BetterGiAutoDialogueRecognizer : IGameUiContextClass
         cancellationToken.ThrowIfCancellationRequested();
         var talk = Match(frame, BetterGiAssetPaths.AutoSkipStopAuto, TopLeft(frame.Size)).IsMatch ||
                    Match(frame, BetterGiAssetPaths.AutoSkipDisabledUi, TopLeftWide(frame.Size)).IsMatch;
-        return ValueTask.FromResult(talk ? GameUiCategory.Talk : GameUiCategory.Unknown);
+        return ValueTask.FromResult<GameUiCategory?>(talk ? GameUiCategory.Talk : null);
     }
 
     public async ValueTask<IReadOnlyList<DialogueOptionCandidate>> FindDialogueOptionsAsync(
@@ -302,45 +306,10 @@ public sealed partial class BetterGiAutoDialogueRecognizer : IGameUiContextClass
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             var template = GetTemplate(assetPath, frame.Size);
-            return frame.UseImage(source => template.UseImage(pattern =>
-            {
-                var roi = searchRegion ?? new RegionOfInterest(0, 0, frame.Size.Width, frame.Size.Height);
-                using var view = new Mat(source, roi.ToRect());
-                if (pattern.Width > view.Width || pattern.Height > view.Height)
-                {
-                    return (IReadOnlyList<RegionOfInterest>)[];
-                }
-
-                using var scores = new Mat();
-                Cv2.MatchTemplate(view, pattern, scores, TemplateMatchModes.CCoeffNormed);
-                var matches = new List<(RegionOfInterest Region, double Score)>();
-                using var working = scores.Clone();
-                while (true)
-                {
-                    Cv2.MinMaxLoc(working, out _, out var score, out _, out var location);
-                    if (score < threshold)
-                    {
-                        break;
-                    }
-
-                    matches.Add((new RegionOfInterest(
-                        roi.X + location.X,
-                        roi.Y + location.Y,
-                        pattern.Width,
-                        pattern.Height), score));
-                    var suppress = new Rect(
-                        Math.Max(0, location.X - pattern.Width / 2),
-                        Math.Max(0, location.Y - pattern.Height / 2),
-                        Math.Min(working.Width - Math.Max(0, location.X - pattern.Width / 2), pattern.Width * 2),
-                        Math.Min(working.Height - Math.Max(0, location.Y - pattern.Height / 2), pattern.Height * 2));
-                    working[suppress].SetTo(Scalar.All(-1));
-                }
-
-                return (IReadOnlyList<RegionOfInterest>)matches
-                    .OrderByDescending(match => match.Score)
-                    .Select(match => match.Region)
-                    .ToArray();
-            }));
+            return _templateMatcher
+                .MatchAll(frame, template, searchRegion, threshold)
+                .Select(match => match.Region!.Value)
+                .ToArray();
         }
     }
 

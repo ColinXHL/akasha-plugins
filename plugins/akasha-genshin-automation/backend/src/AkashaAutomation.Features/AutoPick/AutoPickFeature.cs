@@ -55,6 +55,11 @@ public sealed class AutoPickFeature : IAutomationFeature
             return NoAction(frame, null, "dialogue_active");
         }
 
+        if (context.IsBigMap)
+        {
+            return NoAction(frame, null, "big_map_active");
+        }
+
         var interaction = _recognizer.FindInteraction(frame, options.PickKey);
         if (!interaction.IsMatch || interaction.Region is null)
         {

@@ -30,6 +30,10 @@ public sealed class AutoPickController : IAutoPickController
         }
     }
 
+    public string FeatureId => AutoPickFeature.FeatureId;
+
+    public bool IsEnabled => Options.Enabled;
+
     public AutoPickRuntimeStatus Status
     {
         get
