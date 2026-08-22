@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "akasha-genshin-automation",
   "name": "Akasha 原神自动化",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "由 AkashaNavigator 安全托管的进程外原神自动化组件",
   "authors": [
     {
@@ -61,10 +61,10 @@
   },
   "distribution": {
     "type": "release",
-    "tag": "akasha-genshin-automation-v0.5.1",
-    "asset": "akasha-genshin-automation-0.5.1-win-x64.zip",
-    "size": 68807305,
-    "sha256": "4fc740c5962c28fc4d549f8ac49d3960f2c505cfc49a56e58f36134a45da03c7"
+    "tag": "akasha-genshin-automation-v0.5.2",
+    "asset": "akasha-genshin-automation-0.5.2-win-x64.zip",
+    "size": 68807400,
+    "sha256": "ed7cd81e4bb1fbb864c43c9d92145bb23d73b3ed5d0b7e3494b70a2f3f184c6b"
   },
   "backend": {
     "type": "companion-process",
