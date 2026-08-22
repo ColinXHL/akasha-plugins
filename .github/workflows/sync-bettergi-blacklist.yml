@@ -2,7 +2,8 @@ name: Sync BetterGI blacklist
 
 on:
   schedule:
-    - cron: "17 3 * * *"
+    # GitHub Actions cron uses UTC; 20:17 UTC is 04:17 Asia/Shanghai the next day.
+    - cron: "17 20 * * *"
   workflow_dispatch:
     inputs:
       force:
