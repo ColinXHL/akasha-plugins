@@ -36,10 +36,10 @@ public sealed class PluginPackageContractTests
         Assert.Contains("hotkey", permissions);
         Assert.Equal("release", distribution.GetProperty("type").GetString());
         Assert.Equal(
-            "akasha-genshin-automation-v0.5.1",
+            "akasha-genshin-automation-v0.5.2",
             distribution.GetProperty("tag").GetString());
         Assert.Equal(
-            "akasha-genshin-automation-0.5.1-win-x64.zip",
+            "akasha-genshin-automation-0.5.2-win-x64.zip",
             distribution.GetProperty("asset").GetString());
         Assert.Equal(
             "runtime/AkashaAutomation.Worker.exe",

@@ -21,7 +21,7 @@ public sealed class AutoDialogueFeature : IAutomationFeature
     private readonly IReadOnlyList<IAutoDialogueSceneHandler> _nonTalkHandlers;
     private readonly IClock _clock;
     private DateTimeOffset? _lastTalkUtc;
-    private DateTimeOffset? _talkStartedUtc;
+    private DateTimeOffset? _advanceDelayUntilUtc;
     private DateTimeOffset _nextActionUtc = DateTimeOffset.MinValue;
     private string? _pendingOptionFingerprint;
     private string? _readyOptionFingerprint;
@@ -44,7 +44,7 @@ public sealed class AutoDialogueFeature : IAutomationFeature
             .Where(handler => handler is not RewardDialogueSceneHandler and not HangoutDialogueSceneHandler)
             .ToArray();
         _clock = clock;
-        _controller.Disabled += CancelWait;
+        _controller.Disabled += ResetWaitState;
     }
 
     public string Id => FeatureId;
@@ -62,14 +62,13 @@ public sealed class AutoDialogueFeature : IAutomationFeature
         var now = _clock.UtcNow;
         if (!configuration.Options.Enabled)
         {
-            CancelWait();
+            ResetWaitState();
             return NoAction(frame, context, [], "disabled");
         }
 
         if (context.IsTalk)
         {
             _lastTalkUtc = now;
-            _talkStartedUtc ??= now;
             if (now < _nextActionUtc)
             {
                 return NoAction(frame, context, [], "action_cooldown");
@@ -78,6 +77,7 @@ public sealed class AutoDialogueFeature : IAutomationFeature
             var exclamation = _recognizer.FindExclamationOption(frame);
             if (exclamation is not null && configuration.RuleOptions.Strategy != DialogueOptionStrategy.None)
             {
+                CancelAdvanceDelay();
                 return await SelectOptionAsync(
                     frame,
                     context,
@@ -91,6 +91,7 @@ public sealed class AutoDialogueFeature : IAutomationFeature
             var candidates = await _recognizer.FindDialogueOptionsAsync(frame, cancellationToken).ConfigureAwait(false);
             if (candidates.Count > 0)
             {
+                CancelAdvanceDelay();
                 var decision = BetterGiAutoSkipRules.Decide(
                     candidates,
                     configuration.Lists,
@@ -123,6 +124,7 @@ public sealed class AutoDialogueFeature : IAutomationFeature
             var interaction = _recognizer.FindDialogueInteraction(frame, configuration.Options.InteractionKey);
             if (interaction.IsMatch)
             {
+                CancelAdvanceDelay();
                 return Act(
                     frame,
                     context,
@@ -140,19 +142,31 @@ public sealed class AutoDialogueFeature : IAutomationFeature
                 cancellationToken).ConfigureAwait(false);
             if (hangout.Handled)
             {
+                CancelAdvanceDelay();
                 return ToDecision(frame, context, hangout);
             }
 
             if (!configuration.Options.QuicklyAdvanceEnabled)
             {
+                CancelAdvanceDelay();
                 return NoAction(frame, context, [], "advance_disabled");
             }
 
-            var advanceDue = _talkStartedUtc.Value.AddMilliseconds(configuration.Options.BeforeAdvanceDelayMilliseconds);
-            if (now < advanceDue)
+            if (configuration.Options.BeforeAdvanceDelayMilliseconds > 0)
             {
-                return NoAction(frame, context, [], "advance_delay");
+                if (_advanceDelayUntilUtc is null)
+                {
+                    _advanceDelayUntilUtc = now.AddMilliseconds(configuration.Options.BeforeAdvanceDelayMilliseconds);
+                    return NoAction(frame, context, [], "advance_delay");
+                }
+
+                if (now < _advanceDelayUntilUtc.Value)
+                {
+                    return NoAction(frame, context, [], "advance_delay");
+                }
             }
+
+            _advanceDelayUntilUtc = null;
 
             var key = configuration.Options.AdvanceKey == "Space"
                 ? (ushort)0x20
@@ -165,8 +179,7 @@ public sealed class AutoDialogueFeature : IAutomationFeature
                 new InputActionGroup("auto-dialogue-advance", [InputAction.KeyPress(key)]));
         }
 
-        _talkStartedUtc = null;
-        CancelWait();
+        ResetWaitState();
         if (context.IsBigMap)
         {
             return NoAction(frame, context, [], "big_map_active");
@@ -310,5 +323,13 @@ public sealed class AutoDialogueFeature : IAutomationFeature
         _voiceWaiter.Cancel();
         _pendingOptionFingerprint = null;
         _readyOptionFingerprint = null;
+    }
+
+    private void CancelAdvanceDelay() => _advanceDelayUntilUtc = null;
+
+    private void ResetWaitState()
+    {
+        CancelWait();
+        CancelAdvanceDelay();
     }
 }
