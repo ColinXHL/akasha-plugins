@@ -48,7 +48,17 @@ jobs:
           git fetch origin catalog
           git show \
             origin/catalog:plugins/akasha-genshin-automation/resources.json \
-            > artifacts/bettergi-blacklist/published-resources.json || true
+            > artifacts/bettergi-blacklist/github-published-resources.json || true
+          git remote add cnb-read \
+            https://cnb.cool/AkashaNavigator/akasha-plugins
+          if git fetch cnb-read \
+              catalog:refs/remotes/cnb-read/catalog; then
+            git show \
+              cnb-read/catalog:plugins/akasha-genshin-automation/resources.json \
+              > artifacts/bettergi-blacklist/cnb-published-resources.json || true
+          else
+            : > artifacts/bettergi-blacklist/cnb-published-resources.json
+          fi
 
       - name: Inspect latest stable BetterGI Release
         id: prepare
@@ -65,7 +75,8 @@ jobs:
             --repository-root . \
             --output-directory artifacts/bettergi-blacklist \
             --plan artifacts/bettergi-blacklist/plan.json \
-            --published-catalog artifacts/bettergi-blacklist/published-resources.json \
+            --published-catalog artifacts/bettergi-blacklist/github-published-resources.json \
+            --published-catalog artifacts/bettergi-blacklist/cnb-published-resources.json \
             --github-token "$GH_TOKEN" \
             "${force_argument[@]}"
 

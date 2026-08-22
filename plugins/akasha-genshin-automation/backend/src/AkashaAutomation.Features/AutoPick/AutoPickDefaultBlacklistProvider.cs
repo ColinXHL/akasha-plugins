@@ -14,7 +14,7 @@ public sealed class AutoPickDefaultBlacklistProvider :
     private const int MinimumEntryCount = 1000;
     private const int MaximumEntryCount = 20000;
     private const int MaximumEntryLength = 200;
-    private const long MaximumFileBytes = 2L * 1024 * 1024;
+    private const long MaximumFileBytes = 32L * 1024 * 1024;
 
     private readonly object _gate = new();
     private readonly string? _pluginDataDirectory;

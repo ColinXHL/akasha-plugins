@@ -87,6 +87,21 @@ class SyncBetterGiBlacklistTests(unittest.TestCase):
     def test_numeric_version_normalizes_v_prefix_and_missing_components(self) -> None:
         self.assertEqual(sync.numeric_version("0.63"), sync.numeric_version("v0.63.0"))
         self.assertLess(sync.numeric_version("0.63.0"), sync.numeric_version("0.64.0"))
+        self.assertTrue(sync.is_numeric_rollback("0.64.0", "0.63.0"))
+        self.assertFalse(sync.is_numeric_rollback("0.63", "v0.63.0"))
+
+    def test_catalog_convergence_requires_every_published_catalog(self) -> None:
+        catalog = self.create_catalog("a" * 64, "0.63.0")
+        current = catalog["resources"][0]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            github = root / "github.json"
+            cnb = root / "cnb.json"
+            sync.write_json(github, catalog)
+            sync.write_json(cnb, catalog)
+            self.assertTrue(sync.published_catalogs_match([github, cnb], current))
+            cnb.unlink()
+            self.assertFalse(sync.published_catalogs_match([github, cnb], current))
 
     @staticmethod
     def create_release(tag: str) -> dict:

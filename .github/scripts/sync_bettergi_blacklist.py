@@ -134,6 +134,16 @@ def numeric_version(value: str) -> tuple[int, ...] | None:
     return values + (0,) * (4 - len(values))
 
 
+def is_numeric_rollback(current: str, latest: str) -> bool:
+    current_version = numeric_version(current)
+    latest_version = numeric_version(latest)
+    return (
+        current_version is not None
+        and latest_version is not None
+        and latest_version < current_version
+    )
+
+
 def get_latest_stable_release(token: str) -> dict[str, Any]:
     url = f"https://api.github.com/repos/{UPSTREAM_REPOSITORY}/releases/latest"
     response = requests.get(url, headers=github_headers(token), timeout=(15, 60))
@@ -183,6 +193,16 @@ def published_resource_matches(
         return len(matches) == 1 and matches[0] == current_resource
     except (OSError, json.JSONDecodeError, AttributeError):
         return False
+
+
+def published_catalogs_match(
+    published_catalog_paths: list[Path],
+    current_resource: dict[str, Any],
+) -> bool:
+    return bool(published_catalog_paths) and all(
+        published_resource_matches(path, current_resource)
+        for path in published_catalog_paths
+    )
 
 
 def public_mirrors_available(resource: dict[str, Any], token: str) -> bool:
@@ -246,19 +266,6 @@ def build_plan(
     current = matches[0]
     tag_name = str(release["tag_name"])
     source_version = tag_name[1:] if tag_name.lower().startswith("v") else tag_name
-    current_version = numeric_version(str(current.get("sourceVersion", ""))) if current else None
-    latest_version = numeric_version(source_version)
-    if (
-        current_version is not None
-        and latest_version is not None
-        and latest_version < current_version
-    ):
-        append_output("hasUpdate", False)
-        print(
-            f"Ignoring apparent BetterGI rollback from {current['sourceVersion']} "
-            f"to {source_version}"
-        )
-        return
     digest = hashlib.sha256(payload).hexdigest()
     asset_name = f"default_pick_black_lists.{digest[:12]}.json"
     resource_tag = f"{PLUGIN_ID}-resource-{RESOURCE_ID}-{digest[:12]}"
@@ -325,9 +332,17 @@ def command_prepare(args: argparse.Namespace) -> None:
         None,
     )
     tag_name = str(release["tag_name"])
-    source_version = tag_name[1:] if tag_name.startswith("v") else tag_name
+    source_version = tag_name[1:] if tag_name.lower().startswith("v") else tag_name
+    current_source_version = str(current.get("sourceVersion", "")) if current else ""
+    if is_numeric_rollback(current_source_version, source_version):
+        append_output("hasUpdate", False)
+        print(
+            f"Ignoring apparent BetterGI rollback from {current_source_version} "
+            f"to {source_version}"
+        )
+        return
     if current is not None and current.get("sourceVersion") == source_version and not args.force:
-        catalog_matches = published_resource_matches(args.published_catalog, current)
+        catalog_matches = published_catalogs_match(args.published_catalog, current)
         mirrors_available = public_mirrors_available(current, args.github_token)
         if catalog_matches and mirrors_available:
             append_output("hasUpdate", False)
@@ -412,7 +427,12 @@ def build_parser() -> argparse.ArgumentParser:
     prepare.add_argument("--plan", type=Path, required=True)
     prepare.add_argument("--github-token", default="")
     prepare.add_argument("--seven-zip", default="7z")
-    prepare.add_argument("--published-catalog", type=Path)
+    prepare.add_argument(
+        "--published-catalog",
+        type=Path,
+        action="append",
+        default=[],
+    )
     prepare.add_argument("--force", action="store_true")
     prepare.set_defaults(handler=command_prepare)
     apply = subparsers.add_parser("apply")
