@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "akasha-genshin-automation",
   "name": "Akasha 原神自动化",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "description": "由 AkashaNavigator 安全托管的进程外原神自动化组件",
   "authors": [
     {
@@ -12,7 +12,7 @@
   ],
   "homepage": "https://github.com/ColinXHL/akasha-plugins/tree/main/plugins/akasha-genshin-automation",
   "host": {
-    "minVersion": "1.4.0"
+    "minVersion": "1.4.1"
   },
   "main": "frontend/main.js",
   "settings": "frontend/settings_ui.json",
@@ -26,7 +26,8 @@
   "tags": [
     "原神",
     "自动拾取",
-    "自动剧情"
+    "自动剧情",
+    "快速传送"
   ],
   "savedFiles": [
     "config.json",
@@ -37,8 +38,10 @@
   "defaultConfig": {
     "autoPickEnabled": false,
     "autoDialogueEnabled": false,
+    "quickTeleportEnabled": false,
     "autoPickHotkey": "F9",
     "autoDialogueHotkey": "F12",
+    "quickTeleportHotkey": "F10",
     "pickKey": "F",
     "blackListEnabled": true,
     "userExactBlacklist": "",
@@ -52,14 +55,16 @@
     "closePopupPagesEnabled": true,
     "submitGoodsEnabled": true,
     "autoGetDailyRewardsEnabled": true,
-    "autoReExploreEnabled": true
+    "autoReExploreEnabled": true,
+    "teleportListClickDelayMilliseconds": 200,
+    "waitTeleportPanelDelayMilliseconds": 50
   },
   "distribution": {
     "type": "release",
-    "tag": "akasha-genshin-automation-v0.4.4",
-    "asset": "akasha-genshin-automation-0.4.4-win-x64.zip",
-    "size": 68743502,
-    "sha256": "55a3a0c8eb12c21fa77308c531a6556fbffff001976e8d4f152bc1e3d6f1f4ba"
+    "tag": "akasha-genshin-automation-v0.5.0",
+    "asset": "akasha-genshin-automation-0.5.0-win-x64.zip",
+    "size": 68801818,
+    "sha256": "d2f2b5f5d63cf9f9eef1e0e4ac84b670bdbee7b62aa0f9c4f76416c05fe02027"
   },
   "backend": {
     "type": "companion-process",
