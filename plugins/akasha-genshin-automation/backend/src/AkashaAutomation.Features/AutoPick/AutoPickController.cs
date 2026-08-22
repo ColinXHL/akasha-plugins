@@ -7,16 +7,24 @@ namespace AkashaAutomation.Features.AutoPick;
 public sealed class AutoPickController : IAutoPickController
 {
     private readonly IAssetPathResolver _assetPathResolver;
+    private readonly IAutoPickDefaultBlacklistProvider? _defaultBlacklistProvider;
     private readonly object _gate = new();
     private AutoPickConfiguration _configuration;
     private AutoPickRuntimeStatus _status;
 
-    public AutoPickController(IAssetPathResolver assetPathResolver)
+    public AutoPickController(
+        IAssetPathResolver assetPathResolver,
+        IAutoPickDefaultBlacklistProvider? defaultBlacklistProvider = null)
     {
         _assetPathResolver = assetPathResolver;
+        _defaultBlacklistProvider = defaultBlacklistProvider;
         var options = NormalizeAndValidate(new AutoPickOptions());
         _configuration = CreateConfiguration(options);
         _status = new(options.Enabled, false, null, "not_evaluated", false, null, null);
+        if (_defaultBlacklistProvider != null)
+        {
+            _defaultBlacklistProvider.Changed += OnDefaultBlacklistChanged;
+        }
     }
 
     public AutoPickOptions Options
@@ -99,14 +107,29 @@ public sealed class AutoPickController : IAutoPickController
         }
     }
 
-    private AutoPickConfiguration CreateConfiguration(AutoPickOptions options) =>
-        new(
-            options,
-            BetterGiAutoPickRules.LoadLists(
+    private AutoPickConfiguration CreateConfiguration(AutoPickOptions options)
+    {
+        var lists = _defaultBlacklistProvider == null
+            ? BetterGiAutoPickRules.LoadLists(
                 _assetPathResolver,
                 options.UserExactBlacklist,
                 options.UserFuzzyBlacklist,
-                options.UserWhitelist));
+                options.UserWhitelist)
+            : BetterGiAutoPickRules.LoadLists(
+                _defaultBlacklistProvider.Current.Entries,
+                options.UserExactBlacklist,
+                options.UserFuzzyBlacklist,
+                options.UserWhitelist);
+        return new AutoPickConfiguration(options, lists);
+    }
+
+    private void OnDefaultBlacklistChanged(object? sender, EventArgs args)
+    {
+        lock (_gate)
+        {
+            _configuration = CreateConfiguration(_configuration.Options);
+        }
+    }
 
     private static AutoPickOptions NormalizeAndValidate(AutoPickOptions options)
     {

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "pluginId": "akasha-genshin-automation",
+  "resources": [
+    {
+      "id": "bettergi-default-pick-blacklist",
+      "revision": "f7ddbfddbc02bbc2bf510fa59b1d493934efe14a509903a8adce8c9645c2f64b",
+      "sourceVersion": "0.63.0",
+      "optional": true,
+      "distribution": {
+        "type": "release",
+        "tag": "akasha-genshin-automation-resource-bettergi-default-pick-blacklist-f7ddbfddbc02",
+        "asset": "default_pick_black_lists.f7ddbfddbc02.json",
+        "size": 88126,
+        "sha256": "f7ddbfddbc02bbc2bf510fa59b1d493934efe14a509903a8adce8c9645c2f64b"
+      }
+    }
+  ]
+}

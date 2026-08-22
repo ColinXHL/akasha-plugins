@@ -114,9 +114,14 @@ public static class WorkerHost
         services.AddSingleton<IGameUiContextDetector>(services =>
             services.GetRequiredService<BetterGiQuickTeleportRecognizer>());
         services.AddSingleton<IGameUiContextClassifier, CompositeGameUiContextClassifier>();
+        services.AddSingleton<IAutoPickDefaultBlacklistProvider>(services =>
+            new AutoPickDefaultBlacklistProvider(
+                services.GetRequiredService<IAssetPathResolver>(),
+                Environment.GetEnvironmentVariable("AKASHA_PLUGIN_DATA_DIR")));
         services.AddSingleton<IAutoPickController>(services =>
             new AutoPickController(
-                services.GetRequiredService<IAssetPathResolver>()));
+                services.GetRequiredService<IAssetPathResolver>(),
+                services.GetRequiredService<IAutoPickDefaultBlacklistProvider>()));
         services.AddSingleton<IAutomationFeatureControl>(services =>
             services.GetRequiredService<IAutoPickController>());
         services.AddSingleton<AutoPickFeature>();

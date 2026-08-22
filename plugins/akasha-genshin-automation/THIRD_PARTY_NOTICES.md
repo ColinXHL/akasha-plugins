@@ -27,6 +27,8 @@ Akasha Automation currently includes four unmodified configuration list files, t
 
 Phase 4 and Phase 5 include translated AutoPick and AutoSkip behavior, and the QuickTeleport feature includes translated behavior from BetterGI `0.63.0`, all derived from source files declared in the BetterGI manifest. BetterGI is copyright its contributors and licensed under GPL-3.0. The upstream repository is `https://github.com/babalae/better-genshin-impact`. Source and release pins, file mappings, hashes, local translation decisions, and list statistics are recorded in `DERIVATION.md` and `upstream/bettergi/`.
 
+The default pickup blacklist may also be refreshed independently from later stable BetterGI Releases. Those mirrored data assets remain GPL-3.0-derived BetterGI material; their exact upstream Release, asset name, size, entry count, and SHA-256 are recorded in `resources/bettergi-blacklist-history.json` and the published `resources.json` catalog.
+
 The model README identifies PaddleOCR inference models converted through Paddle2ONNX. Their upstream license texts and the exact conversion provenance must be included in the Phase 7 release license review; the BetterGI archive and every copied file are already pinned by SHA-256.
 
 ## Runtime libraries introduced in Phase 3

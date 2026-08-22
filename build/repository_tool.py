@@ -88,6 +88,68 @@ def create_manifest_validator(root: Path) -> Draft202012Validator:
     return Draft202012Validator(schema)
 
 
+def create_resource_validator(root: Path) -> Draft202012Validator:
+    schema_path = root / "schemas" / "plugin-resources.schema.json"
+    schema = load_json(schema_path)
+    Draft202012Validator.check_schema(schema)
+    return Draft202012Validator(schema)
+
+
+def validate_plugin_resources(
+    root: Path,
+    plugin_directory: Path,
+    plugin_id: str,
+) -> list[str]:
+    path = plugin_directory / "resources.json"
+    if not path.is_file():
+        return []
+
+    try:
+        document = load_json(path)
+    except RepositoryValidationError as error:
+        return error.messages
+
+    errors: list[str] = []
+    validator = create_resource_validator(root)
+    for error in sorted(
+        validator.iter_errors(document),
+        key=lambda item: list(item.absolute_path),
+    ):
+        location = ".".join(str(value) for value in error.absolute_path)
+        suffix = f" at {location}" if location else ""
+        errors.append(f"{path}: {error.message}{suffix}")
+
+    if document.get("pluginId") != plugin_id:
+        errors.append(f"{path}: pluginId must be {plugin_id!r}")
+
+    seen_ids: set[str] = set()
+    for resource in document.get("resources", []):
+        if not isinstance(resource, dict):
+            continue
+        resource_id = resource.get("id")
+        if not isinstance(resource_id, str):
+            continue
+        if resource_id in seen_ids:
+            errors.append(f"{path}: duplicate resource ID {resource_id!r}")
+        seen_ids.add(resource_id)
+
+        distribution = resource.get("distribution")
+        revision = resource.get("revision")
+        if not isinstance(distribution, dict) or not isinstance(revision, str):
+            continue
+        if distribution.get("sha256") != revision:
+            errors.append(
+                f"{path}: resource {resource_id!r} revision must equal sha256"
+            )
+        expected_tag = f"{plugin_id}-resource-{resource_id}-{revision[:12]}"
+        if distribution.get("tag") != expected_tag:
+            errors.append(
+                f"{path}: resource {resource_id!r} tag must be {expected_tag!r}"
+            )
+
+    return errors
+
+
 def validate_release_naming(manifest: dict[str, Any]) -> list[str]:
     distribution = manifest["distribution"]
     if distribution["type"] != "release":
@@ -211,6 +273,9 @@ def discover_plugins(
                 PluginRecord(plugin_directory, manifest_path, manifest)
             ))
             errors.extend(
+                validate_plugin_resources(root, plugin_directory, plugin_id)
+            )
+            errors.extend(
                 f"{manifest_path}: {message}"
                 for message in validate_release_naming(manifest)
             )
@@ -283,6 +348,19 @@ def copy_plugin_to_catalog(record: PluginRecord, target: Path) -> None:
         destination = target / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
+
+
+def copy_plugin_resources_to_catalog(
+    source: PluginRecord,
+    target: Path,
+) -> None:
+    resource_catalog = source.directory / "resources.json"
+    destination = target / "resources.json"
+    if resource_catalog.is_file():
+        target.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(resource_catalog, destination)
+    elif destination.exists():
+        destination.unlink()
 
 
 def has_release_integrity(manifest: dict[str, Any]) -> bool:
@@ -467,21 +545,25 @@ def command_generate(args: argparse.Namespace) -> None:
 
 
 def command_stage(args: argparse.Namespace) -> None:
-    records = discover_plugins(
+    source_records = discover_plugins(
         args.root,
         require_release_integrity=False,
     )
     records = apply_release_metadata(
-        records,
+        source_records,
         args.release_metadata,
     )
     records = resolve_catalog_records(records, args.previous_catalog)
     reset_staging_directory(args.root, args.output)
     for record in records:
-        copy_plugin_to_catalog(
-            record,
-            args.output / "plugins" / record.manifest["id"],
+        target = args.output / "plugins" / record.manifest["id"]
+        copy_plugin_to_catalog(record, target)
+        source = next(
+            item
+            for item in source_records
+            if item.manifest["id"] == record.manifest["id"]
         )
+        copy_plugin_resources_to_catalog(source, target)
     shutil.copy2(args.root / "LICENSE", args.output / "LICENSE")
     write_json(args.output / "repo.json", build_index(records, args.commit))
     print(f"Staged catalog at {args.output} with {len(records)} plugin(s).")

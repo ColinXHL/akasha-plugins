@@ -231,6 +231,65 @@ class RepositoryToolTests(unittest.TestCase):
             self.assertNotIn("size", source_manifest["distribution"])
             self.assertNotIn("sha256", source_manifest["distribution"])
 
+    def test_resource_catalog_is_validated_and_copied_for_release_plugin(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = self.create_repository_fixture(Path(temporary))
+            plugin = self.create_release_plugin(
+                fixture,
+                "release-plugin",
+                "1.0.0",
+                include_integrity=True,
+            )
+            digest = "c" * 64
+            repository_tool.write_json(
+                plugin / "resources.json",
+                {
+                    "schemaVersion": 1,
+                    "pluginId": "release-plugin",
+                    "resources": [
+                        {
+                            "id": "default-list",
+                            "revision": digest,
+                            "sourceVersion": "2.0.0",
+                            "optional": True,
+                            "distribution": {
+                                "type": "release",
+                                "tag": (
+                                    "release-plugin-resource-default-list-"
+                                    + digest[:12]
+                                ),
+                                "asset": f"default-list.{digest[:12]}.json",
+                                "size": 123,
+                                "sha256": digest,
+                            },
+                        }
+                    ],
+                },
+            )
+
+            records = repository_tool.discover_plugins(
+                fixture,
+                require_release_integrity=True,
+            )
+            output = fixture / "artifacts" / "catalog"
+            repository_tool.reset_staging_directory(fixture, output)
+            target = output / "plugins" / "release-plugin"
+            repository_tool.copy_plugin_to_catalog(records[0], target)
+            repository_tool.copy_plugin_resources_to_catalog(records[0], target)
+
+            self.assertTrue((target / "resources.json").is_file())
+
+            document = json.loads((plugin / "resources.json").read_text())
+            document["resources"][0]["revision"] = "d" * 64
+            repository_tool.write_json(plugin / "resources.json", document)
+            with self.assertRaises(repository_tool.RepositoryValidationError):
+                repository_tool.discover_plugins(
+                    fixture,
+                    require_release_integrity=True,
+                )
+
     @staticmethod
     def create_repository_fixture(root: Path) -> Path:
         root.mkdir(parents=True, exist_ok=True)

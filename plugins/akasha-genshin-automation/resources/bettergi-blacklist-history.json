@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "resourceId": "bettergi-default-pick-blacklist",
+  "updates": [
+    {
+      "sourceVersion": "0.63.0",
+      "upstreamReleaseTag": "0.63.0",
+      "upstreamReleaseUrl": "https://github.com/babalae/better-genshin-impact/releases/tag/0.63.0",
+      "upstreamAsset": "BetterGI_v0.63.0.7z",
+      "entryCount": 4918,
+      "size": 88126,
+      "sha256": "f7ddbfddbc02bbc2bf510fa59b1d493934efe14a509903a8adce8c9645c2f64b",
+      "syncedAtUtc": "2026-08-22T08:17:03Z"
+    }
+  ]
+}
