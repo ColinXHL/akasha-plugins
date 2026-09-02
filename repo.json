@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "commit": "4d93a47832fe9362b117d240acf494db4e753a04",
+  "commit": "af66f0cd57f4e867c78cff2b50135d03e84bd66c",
   "plugins": [
     {
       "id": "akasha-genshin-automation",
@@ -26,7 +26,7 @@
       "id": "genshin-direction-marker",
       "path": "plugins/genshin-direction-marker",
       "name": "原神方向标记",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "description": "识别攻略视频中的方位词，在小地图上显示方向标记",
       "distributionType": "repository",
       "hasBackend": false,
