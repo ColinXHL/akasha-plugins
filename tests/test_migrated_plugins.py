@@ -24,7 +24,7 @@ EXPECTED_PLUGINS = {
         "files": {"main.js", "settings_ui.json"},
     },
     "genshin-direction-marker": {
-        "version": "1.1.0",
+        "version": "1.1.1",
         "permissions": {"overlay", "subtitle"},
         "files": {"main.js", "settings_ui.json", "assets/right.png"},
     },
