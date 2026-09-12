@@ -1,4 +1,4 @@
-// main.js - B站分P列表插件 v1.2.2
+// main.js - B站分P列表插件 v1.3.0
 // 显示B站视频分P列表独立窗口，支持快速切换分P
 
 // ============================================================================
@@ -17,6 +17,8 @@ var state = {
     scrollOffset: 0,           // 滚动偏移
     danmakuEnabled: true,      // 弹幕开关状态（默认开启）
     danmakuStateKnown: false,  // 是否已成功同步弹幕状态
+    danmakuPreferred: null,    // null 表示沿用页面状态，布尔值表示本次运行的用户意图
+    pendingDanmakuApply: false,
     subtitlePreferred: null,   // 用户意图独立于当前视频是否有字幕
     lastPlaybackSyncAt: 0,
     subtitleEnabled: false,    // 字幕开关状态
@@ -25,6 +27,8 @@ var state = {
     pendingSubtitleEnable: false, // 等待字幕加载后自动开启
     lastToggleAt: 0,           // 面板开关防抖时间戳
     lastSubtitleToggleAt: 0,   // 字幕开关防抖时间戳
+    defaultPlaybackRate: 0,    // 0 表示沿用 B 站设置
+    pendingPlaybackRateApply: false,
     pendingOpen: false,        // 启动阶段延迟打开标记
     lastPageNavigateAt: 0,     // 分P切换防抖时间戳
     pendingNavigationPage: 0   // 最近一次导航目标分P（用于快速切换保护）
@@ -919,7 +923,60 @@ function goToPreviousPage() {
 
 // 宿主 URL 事件携带 { url }，播放更新用于补齐异步初始化后的状态。
 function onPlayerUrlChanged(data) {
-    onUrlChanged(typeof data === 'string' ? data : (data && data.url));
+    var url = typeof data === 'string' ? data : (data && data.url);
+    var isBilibili = parseUrl(url).isBilibili;
+    if (isBilibili) queuePlaybackDefaults();
+    onUrlChanged(url);
+    if (isBilibili) applyPendingPlaybackDefaults();
+}
+
+function queuePlaybackDefaults() {
+    state.pendingDanmakuApply = state.danmakuPreferred !== null;
+    state.pendingSubtitleEnable = state.subtitlePreferred === true;
+    state.pendingPlaybackRateApply = state.defaultPlaybackRate > 0;
+
+    if (state.pendingSubtitleEnable &&
+        typeof subtitle !== 'undefined' && subtitle && typeof subtitle.request === 'function') {
+        subtitle.request();
+    }
+}
+
+function applyPendingDanmakuPreference() {
+    if (!state.pendingDanmakuApply || state.danmakuPreferred === null) return;
+    if (!syncDanmakuStateFromPage()) return;
+
+    if (state.danmakuEnabled !== state.danmakuPreferred) {
+        setDanmakuEnabled(state.danmakuPreferred, false);
+    }
+    state.pendingDanmakuApply = false;
+    log.info('已应用默认弹幕状态: ' + (state.danmakuPreferred ? '开启' : '关闭'));
+}
+
+function applyPendingPlaybackRate() {
+    if (!state.pendingPlaybackRateApply || state.defaultPlaybackRate <= 0) return;
+
+    try {
+        var rateText = String(state.defaultPlaybackRate);
+        var result = webview.executeScriptSync("(function(){" +
+            "var video=document.querySelector('video');" +
+            "if(!video) return '';" +
+            "video.defaultPlaybackRate=" + rateText + ";" +
+            "video.playbackRate=" + rateText + ";" +
+            "return String(video.playbackRate);" +
+        "})();");
+        var appliedRate = parseFloat(result);
+        if (isFinite(appliedRate) && Math.abs(appliedRate - state.defaultPlaybackRate) < 0.001) {
+            state.pendingPlaybackRateApply = false;
+            log.info('已应用默认播放倍速: ' + state.defaultPlaybackRate + 'x');
+        }
+    } catch (e) {
+        log.debug('应用默认播放倍速失败，稍后重试: ' + e.message);
+    }
+}
+
+function applyPendingPlaybackDefaults() {
+    applyPendingDanmakuPreference();
+    applyPendingPlaybackRate();
 }
 
 function restoreSubtitlePreference() {
@@ -943,10 +1000,14 @@ function onPlaybackUpdate() {
     var currentUrl = player.getUrl();
     var parsed = parseUrl(currentUrl);
     if (!parsed.isBilibili) return;
-    if (parsed.videoId !== state.currentVideoId) onUrlChanged(currentUrl);
+    if (parsed.videoId !== state.currentVideoId) {
+        queuePlaybackDefaults();
+        onUrlChanged(currentUrl);
+    }
     var previousPage = state.currentPage;
     syncCurrentPageFromPageState();
     if (state.isVisible && previousPage !== state.currentPage) renderPageList();
+    applyPendingPlaybackDefaults();
     syncSubtitleStateFromPage();
     restoreSubtitlePreference();
     if (state.isVisible) refreshActionButtons();
@@ -1094,10 +1155,9 @@ function onPanelActionClick(payload) {
 }
 
 /**
- * 切换弹幕开关（通过 B 站 web/config 接口）
+ * 设置弹幕开关（通过 B 站 web/config 接口）
  */
-function toggleDanmaku() {
-    var targetEnabled = !state.danmakuEnabled;
+function setDanmakuEnabled(targetEnabled, showFeedback) {
     var targetText = targetEnabled ? 'true' : 'false';
 
     var script = "(function(){" +
@@ -1108,7 +1168,8 @@ function toggleDanmaku() {
                 "var part=(parts[i]||'').trim();" +
                 "if(part.indexOf('bili_jct=')===0){csrf=decodeURIComponent(part.substring(9));break;}" +
             "}" +
-            "if(!csrf){console.warn('[bilibili-page-list] bili_jct not found');return;}" +
+            "if(!csrf){console.warn('[bilibili-page-list] bili_jct not found');}" +
+            "if(csrf){" +
             "var body='dm_switch=" + targetText + "&ts='+Date.now()+'&csrf='+encodeURIComponent(csrf)+'&csrf_token='+encodeURIComponent(csrf);" +
             "fetch('https://api.bilibili.com/x/v2/dm/web/config',{" +
                 "method:'POST'," +
@@ -1116,6 +1177,7 @@ function toggleDanmaku() {
                 "headers:{'accept':'application/json, text/plain, */*','content-type':'application/x-www-form-urlencoded'}," +
                 "body:body" +
             "}).then(function(r){return r.text();}).then(function(t){console.log('[bilibili-page-list] dm_switch response',t);}).catch(function(e){console.error('[bilibili-page-list] dm_switch failed',e);});" +
+            "}" +
             "var sels=['.bpx-player-ctrl-dm .bui-switch-input','.bpx-player-dm-switch input','.bpx-player-ctrl-dm-switch input','.bilibili-player-video-danmaku-switch input','.bui-switch-input'];" +
             "for(var j=0;j<sels.length;j++){" +
                 "var el=document.querySelector(sels[j]);" +
@@ -1132,9 +1194,17 @@ function toggleDanmaku() {
     refreshActionButtons();
 
     log.info('弹幕切换: ' + (state.danmakuEnabled ? '开启' : '关闭'));
-    if (typeof osd !== 'undefined') {
+    if (showFeedback && typeof osd !== 'undefined') {
         osd.show(state.danmakuEnabled ? '弹幕已开启' : '弹幕已关闭', state.danmakuEnabled ? '💬' : '🔇');
     }
+}
+
+function toggleDanmaku() {
+    syncDanmakuStateFromPage();
+    var targetEnabled = !state.danmakuEnabled;
+    state.danmakuPreferred = targetEnabled;
+    state.pendingDanmakuApply = false;
+    setDanmakuEnabled(targetEnabled, true);
 }
 
 /**
@@ -1312,6 +1382,11 @@ function onLoad() {
     var subtitleHotkey = config.get('subtitleHotkey', 'Alt+S');
     var prevPageHotkey = config.get('prevPageHotkey', 'Alt+Left');
     var nextPageHotkey = config.get('nextPageHotkey', 'Alt+Right');
+    state.danmakuPreferred = config.get('playback.autoEnableDanmaku', false) ? true : null;
+    state.subtitlePreferred = config.get('playback.autoEnableSubtitle', false) ? true : null;
+    var configuredPlaybackRate = parseFloat(config.get('playback.defaultRate', '0'));
+    state.defaultPlaybackRate = isFinite(configuredPlaybackRate) && configuredPlaybackRate >= 0.5 &&
+        configuredPlaybackRate <= 3 ? configuredPlaybackRate : 0;
     if (subtitleHotkey === 'Alt+Shift+S') {
         subtitleHotkey = 'Alt+S';
         config.set('subtitleHotkey', subtitleHotkey);
@@ -1371,7 +1446,7 @@ function onLoad() {
     log.info('当前URL: ' + currentUrl);
     if (currentUrl) {
         log.info('调用 onUrlChanged 处理当前URL');
-        onUrlChanged(currentUrl);
+        onPlayerUrlChanged(currentUrl);
     } else {
         log.info('当前URL为空，等待URL变化事件');
     }

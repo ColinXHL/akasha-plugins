@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "commit": "cc6e5be0068021c329f0aa4ba498ded6f7140de8",
+  "commit": "77948c21dd8b75617144015c1ebdd1ba1cec51ee",
   "plugins": [
     {
       "id": "akasha-genshin-automation",
@@ -16,7 +16,7 @@
       "id": "bilibili-page-list",
       "path": "plugins/bilibili-page-list",
       "name": "B站分P列表",
-      "version": "1.2.2",
+      "version": "1.3.0",
       "description": "显示B站视频分P列表独立窗口，支持快速切换分P（快捷键/按钮）",
       "distributionType": "repository",
       "hasBackend": false,

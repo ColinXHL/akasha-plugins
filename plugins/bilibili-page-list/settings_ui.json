@@ -1,6 +1,42 @@
 {
   "sections": [
     {
+      "title": "播放默认设置",
+      "items": [
+        {
+          "type": "checkbox",
+          "key": "playback.autoEnableSubtitle",
+          "label": "加载视频时自动开启字幕",
+          "description": "优先开启中文 AI 字幕或中文字幕。",
+          "default": false
+        },
+        {
+          "type": "checkbox",
+          "key": "playback.autoEnableDanmaku",
+          "label": "加载视频时自动开启弹幕",
+          "description": "页面播放器准备好后自动开启弹幕。",
+          "default": false
+        },
+        {
+          "type": "select",
+          "key": "playback.defaultRate",
+          "label": "默认播放倍速",
+          "description": "每次加载 B 站视频后自动应用一次。",
+          "default": "0",
+          "options": [
+            { "value": "0", "label": "沿用 B 站设置" },
+            { "value": "0.5", "label": "0.5x" },
+            { "value": "0.75", "label": "0.75x" },
+            { "value": "1", "label": "1.0x" },
+            { "value": "1.25", "label": "1.25x" },
+            { "value": "1.5", "label": "1.5x" },
+            { "value": "2", "label": "2.0x" },
+            { "value": "3", "label": "3.0x" }
+          ]
+        }
+      ]
+    },
+    {
       "title": "快捷键设置",
       "items": [
         {
