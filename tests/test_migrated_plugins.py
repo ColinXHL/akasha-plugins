@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 EXPECTED_PLUGINS = {
     "bilibili-page-list": {
-        "version": "1.2.2",
+        "version": "1.3.0",
         "permissions": {
             "events",
             "hotkey",
@@ -37,6 +37,32 @@ EXPECTED_PLUGINS = {
 
 
 class MigratedPluginTests(unittest.TestCase):
+    def test_bilibili_playback_defaults_are_exposed_in_settings(self) -> None:
+        plugin = ROOT / "plugins" / "bilibili-page-list"
+        manifest = json.loads((plugin / "manifest.json").read_text(encoding="utf-8"))
+        settings = json.loads((plugin / "settings_ui.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(
+            {
+                "autoEnableSubtitle": False,
+                "autoEnableDanmaku": False,
+                "defaultRate": "0",
+            },
+            manifest["defaultConfig"]["playback"],
+        )
+        playback_section = next(
+            section for section in settings["sections"]
+            if section["title"] == "播放默认设置"
+        )
+        self.assertEqual(
+            {
+                "playback.autoEnableSubtitle",
+                "playback.autoEnableDanmaku",
+                "playback.defaultRate",
+            },
+            {item["key"] for item in playback_section["items"]},
+        )
+
     def test_migrated_plugins_preserve_frozen_ids_versions_and_permissions(
         self,
     ) -> None:
