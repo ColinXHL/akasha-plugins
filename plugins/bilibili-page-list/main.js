@@ -1,4 +1,4 @@
-// main.js - B站分P列表插件 v1.2.1
+// main.js - B站分P列表插件 v1.2.2
 // 显示B站视频分P列表独立窗口，支持快速切换分P
 
 // ============================================================================
@@ -17,6 +17,8 @@ var state = {
     scrollOffset: 0,           // 滚动偏移
     danmakuEnabled: true,      // 弹幕开关状态（默认开启）
     danmakuStateKnown: false,  // 是否已成功同步弹幕状态
+    subtitlePreferred: null,   // 用户意图独立于当前视频是否有字幕
+    lastPlaybackSyncAt: 0,
     subtitleEnabled: false,    // 字幕开关状态
     subtitleLanguage: '',      // 当前字幕语言（由 SubtitleService 提供）
     subtitleReady: false,      // 是否已加载可用字幕
@@ -139,8 +141,6 @@ function detectCurrentPageFromPageState() {
                 "try{" +
                     "var st=window.__INITIAL_STATE__||null;" +
                     "if(!st) return 0;" +
-                    "if(typeof st.p==='number'&&st.p>0) return st.p;" +
-                    "if(st.videoData&&typeof st.videoData.p==='number'&&st.videoData.p>0) return st.videoData.p;" +
                     "var pages=(st.videoData&&st.videoData.pages&&st.videoData.pages.length)?st.videoData.pages:null;" +
                     "if(!pages) return 0;" +
                     "var cid=0;" +
@@ -917,14 +917,48 @@ function goToPreviousPage() {
 // 事件处理
 // ============================================================================
 
-/**
- * URL变化处理
- * @param {string} url - 新URL
- */
+// 宿主 URL 事件携带 { url }，播放更新用于补齐异步初始化后的状态。
+function onPlayerUrlChanged(data) {
+    onUrlChanged(typeof data === 'string' ? data : (data && data.url));
+}
+
+function restoreSubtitlePreference() {
+    if (state.subtitlePreferred === false) {
+        if (state.subtitleEnabled) setBilibiliSubtitleSwitch(false);
+        state.subtitleEnabled = false;
+        state.pendingSubtitleEnable = false;
+        return;
+    }
+    if (!state.pendingSubtitleEnable) return;
+    var language = getPreferredSubtitleLanguageFromDom();
+    if (!language) return; // 字幕菜单可能晚于字幕数据出现，留待下一次同步。
+    state.pendingSubtitleEnable = false;
+    enableSubtitleByDomPriority();
+}
+
+function onPlaybackUpdate() {
+    var now = Date.now();
+    if (now - state.lastPlaybackSyncAt < 1000) return;
+    state.lastPlaybackSyncAt = now;
+    var currentUrl = player.getUrl();
+    var parsed = parseUrl(currentUrl);
+    if (!parsed.isBilibili) return;
+    if (parsed.videoId !== state.currentVideoId) onUrlChanged(currentUrl);
+    var previousPage = state.currentPage;
+    syncCurrentPageFromPageState();
+    if (state.isVisible && previousPage !== state.currentPage) renderPageList();
+    syncSubtitleStateFromPage();
+    restoreSubtitlePreference();
+    if (state.isVisible) refreshActionButtons();
+}
+
+/** URL变化处理，保留用户的字幕选择并重建导航上下文。 */
 function onUrlChanged(url) {
     log.info('URL变化事件触发: ' + url);
 
     var parseResult = parseUrl(url);
+    if (state.subtitlePreferred === null && state.subtitleEnabled) state.subtitlePreferred = true;
+    state.pendingSubtitleEnable = state.subtitlePreferred === true;
 
     log.info('URL解析结果: isBilibili=' + parseResult.isBilibili + ', videoId=' + parseResult.videoId + ', idType=' + parseResult.videoIdType);
 
@@ -966,7 +1000,7 @@ function onUrlChanged(url) {
 // 新视频：先失效旧缓存，再按新上下文重建
     state.pageList = [];
     state.pendingNavigationPage = 0;
-    state.currentPage = 1;
+    state.currentPage = parseResult.currentPage;
 
     state.currentVideoId = parseResult.videoId;
     state.currentVideoIdType = parseResult.videoIdType;
@@ -974,6 +1008,9 @@ function onUrlChanged(url) {
     // 同步获取分P列表
     var pageList = fetchPageList(parseResult.videoId, parseResult.videoIdType);
     state.pageList = pageList;
+    if (!parseResult.hasPageParam) {
+        syncCurrentPageFromPageState();
+    }
 
     // 单P视频不显示列表
     if (pageList.length <= 1) {
@@ -1110,7 +1147,8 @@ function toggleSubtitle() {
     }
     state.lastSubtitleToggleAt = now;
 
-    if (state.subtitleEnabled) {
+    if (state.subtitleEnabled || state.pendingSubtitleEnable) {
+        state.subtitlePreferred = false;
         state.pendingSubtitleEnable = false;
         setBilibiliSubtitleSwitch(false);
         state.subtitleEnabled = false;
@@ -1122,6 +1160,7 @@ function toggleSubtitle() {
         return;
     }
 
+    state.subtitlePreferred = true;
     var hasSubtitles = false;
     try {
         hasSubtitles = !!(typeof subtitle !== 'undefined' && subtitle.hasSubtitles);
@@ -1228,8 +1267,7 @@ function onSubtitleLoaded(data) {
     log.info('字幕已加载: language=' + state.subtitleLanguage + ', ready=' + state.subtitleReady);
 
     if (state.pendingSubtitleEnable) {
-        state.pendingSubtitleEnable = false;
-        enableSubtitleByDomPriority();
+        restoreSubtitlePreference();
     }
 }
 
@@ -1237,9 +1275,12 @@ function onSubtitleLoaded(data) {
  * 字幕清空事件
  */
 function onSubtitleCleared() {
+    if (state.subtitlePreferred === null && state.subtitleEnabled) {
+        state.subtitlePreferred = true;
+    }
     state.subtitleLanguage = '';
     state.subtitleReady = false;
-    state.pendingSubtitleEnable = false;
+    state.pendingSubtitleEnable = state.subtitlePreferred === true;
     state.subtitleEnabled = false;
     refreshActionButtons();
     log.info('字幕已清空');
@@ -1303,7 +1344,8 @@ function onLoad() {
     log.info('已注册下一个分P快捷键: ' + nextPageHotkey);
 
     // 监听URL变化
-    player.on('urlChanged', onUrlChanged);
+    event.on('urlChanged', onPlayerUrlChanged);
+    event.on('timeUpdate', onPlaybackUpdate);
 
     // 监听字幕状态（用于“字”按钮优先级判断）
     if (typeof subtitle !== 'undefined' && subtitle && typeof subtitle.on === 'function') {
@@ -1355,7 +1397,8 @@ function onUnload() {
     hideOverlay();
 
     // 取消事件监听
-    player.off('urlChanged');
+    event.off('urlChanged');
+    event.off('timeUpdate');
     if (typeof subtitle !== 'undefined' && subtitle && typeof subtitle.off === 'function') {
         subtitle.off('load');
         subtitle.off('clear');
