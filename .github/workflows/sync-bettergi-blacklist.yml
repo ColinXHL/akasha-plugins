@@ -14,6 +14,8 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
 
 concurrency:
   group: sync-bettergi-blacklist
@@ -165,24 +167,113 @@ jobs:
           python build/repository_tool.py --root . validate
           python tests/validate_contracts.py
 
-      - name: Commit source resource metadata
+      - name: Commit, validate, and merge source resource metadata
         if: steps.prepare.outputs.hasUpdate == 'true'
         id: commit
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SYNC_BRANCH: automation/bettergi-blacklist-sync
         run: |
+          set -euo pipefail
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
             plugins/akasha-genshin-automation/resources.json \
             plugins/akasha-genshin-automation/resources/bettergi-blacklist-history.json
+
           if git diff --cached --quiet; then
-            echo "No metadata change to commit"
-          else
-            version="$(python -c 'import json; print(json.load(open("artifacts/bettergi-blacklist/plan.json"))["upstreamReleaseTag"])')"
-            git commit -m "data(automation): sync BetterGI blacklist ${version}"
-            git push origin HEAD:main
+            echo "No source metadata change to commit; catalog recovery can continue."
+            echo "sourceCommit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
-          echo "sourceCommit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+          version="$(python -c 'import json; print(json.load(open("artifacts/bettergi-blacklist/plan.json"))["upstreamReleaseTag"])')"
+          git commit -m "data(automation): sync BetterGI blacklist ${version}"
+          source_head="$(git rev-parse HEAD)"
+
+          # main is protected by a repository rule that requires every change to
+          # arrive through a pull request. Keep one automation-owned branch so a
+          # failed validation can be updated by the next scheduled run.
+          git push --force origin HEAD:"$SYNC_BRANCH"
+
+          pr_number="$(gh pr list \
+            --head "$SYNC_BRANCH" \
+            --base main \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')"
+
+          pr_body="$(cat <<EOF
+          Automated BetterGI blacklist metadata synchronization.
+
+          Upstream BetterGI release: `$version`
+          Source commit: `$source_head`
+
+          The workflow verifies both GitHub and CNB mirrors before opening this PR,
+          explicitly runs the repository Validate workflow on this commit, and only
+          merges after that validation succeeds.
+          EOF
+          )"
+
+          if [[ -z "$pr_number" ]]; then
+            pr_url="$(gh pr create \
+              --base main \
+              --head "$SYNC_BRANCH" \
+              --title "data(automation): sync BetterGI blacklist $version" \
+              --body "$pr_body")"
+            pr_number="$(gh pr view "$pr_url" --json number --jq .number)"
+          else
+            gh pr edit "$pr_number" \
+              --title "data(automation): sync BetterGI blacklist $version" \
+              --body "$pr_body"
+          fi
+
+          echo "Using automation PR #$pr_number for $source_head"
+
+          # Events created with GITHUB_TOKEN do not recursively trigger normal
+          # pull_request workflows. workflow_dispatch is an explicit exception,
+          # so run the full Validate workflow ourselves and wait for the exact
+          # source commit before merging.
+          gh workflow run validate.yml --ref "$SYNC_BRANCH"
+
+          validate_run=""
+          for attempt in $(seq 1 30); do
+            validate_run="$(gh run list \
+              --workflow validate.yml \
+              --branch "$SYNC_BRANCH" \
+              --event workflow_dispatch \
+              --limit 20 \
+              --json databaseId,headSha \
+              --jq ".[] | select(.headSha == \"$source_head\") | .databaseId" \
+              | head -n 1)"
+            if [[ -n "$validate_run" ]]; then
+              break
+            fi
+            sleep 2
+          done
+
+          if [[ -z "$validate_run" ]]; then
+            echo "::error::Unable to locate the dispatched Validate run for $source_head"
+            exit 1
+          fi
+
+          gh run watch "$validate_run" --exit-status
+
+          # The ruleset requires a PR but no human approvals. Merge through the
+          # PR API instead of pushing main directly, then use the resulting main
+          # commit as the catalog's source commit.
+          gh pr merge "$pr_number" --squash --delete-branch
+          source_commit="$(gh pr view "$pr_number" --json mergeCommit --jq '.mergeCommit.oid')"
+          if [[ -z "$source_commit" || "$source_commit" == "null" ]]; then
+            echo "::error::Merged PR #$pr_number did not expose a merge commit"
+            exit 1
+          fi
+
+          git fetch origin main
+          git reset --hard "$source_commit"
+          echo "sourceCommit=$source_commit" >> "$GITHUB_OUTPUT"
 
       - name: Prepare catalog worktree
         if: steps.prepare.outputs.hasUpdate == 'true'
