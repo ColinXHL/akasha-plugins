@@ -1,4 +1,4 @@
-// main.js - B站分P列表插件 v1.3.0
+// main.js - B站分P列表插件 v1.4.0
 // 显示B站视频分P列表独立窗口，支持快速切换分P
 
 // ============================================================================
@@ -35,6 +35,77 @@ var state = {
 };
 
 var PAGE_NAVIGATION_DEBOUNCE_MS = 320;
+
+var combatPauseEnabled = false;
+var combatPauseSeen = Object.create(null);
+
+function matchesCombatSubtitle(text) {
+    // 容忍字幕分词空格；覆盖“清一下怪”“清理一下怪”等口语变体。
+    return /(?:清(?:理)?(?:一下|下)?怪|打(?:一下|下)?怪)/.test(String(text || '').replace(/\s+/g, ''));
+}
+
+// 此函数序列化到网页执行，使用网页定时器，避免阻塞插件或 UI 线程。
+function scheduleCombatPauseInPage(expectedUrl, from, to) {
+    if (location.href !== expectedUrl) return '';
+    var video = document.querySelector('video');
+    if (!video || video.seeking || video.ended) return '';
+    if (video.currentTime < from - 0.5 || video.currentTime > to + 0.5) return '';
+    if (video.paused) return 'paused';
+    if (window.__akashaCombatPause) return 'pending';
+    var source = video.currentSrc;
+    var job = { timer: null, cancel: cancel };
+    function cancel() {
+        clearTimeout(job.timer);
+        video.removeEventListener('seeking', cancel);
+        video.removeEventListener('pause', cancel);
+        video.removeEventListener('emptied', cancel);
+        window.removeEventListener('pagehide', cancel);
+        if (window.__akashaCombatPause === job) delete window.__akashaCombatPause;
+    }
+    window.__akashaCombatPause = job;
+    video.addEventListener('seeking', cancel);
+    video.addEventListener('pause', cancel);
+    video.addEventListener('emptied', cancel);
+    window.addEventListener('pagehide', cancel);
+    job.timer = setTimeout(function() {
+        cancel();
+        if (location.href !== expectedUrl || document.querySelector('video') !== video ||
+            video.currentSrc !== source || video.paused || video.ended || video.seeking) return;
+        video.pause();
+    }, 500);
+    return 'scheduled';
+}
+
+function resetCombatPause() {
+    combatPauseSeen = Object.create(null);
+    if (typeof webview === 'undefined') return;
+    try {
+        webview.injectScript("if(window.__akashaCombatPause){window.__akashaCombatPause.cancel();}");
+    } catch (e) {
+        log.debug('取消字幕暂停失败: ' + e.message);
+    }
+}
+
+function onCombatSubtitleChanged(entry) {
+    if (!combatPauseEnabled || !entry || !matchesCombatSubtitle(entry.content)) return;
+    var url = player.getUrl();
+    if (!parseUrl(url).isBilibili) return;
+    var from = Number(entry.from);
+    var to = Number(entry.to);
+    if (!isFinite(from) || !isFinite(to) || to < from) return;
+    var key = JSON.stringify([url, from, to, entry.content]);
+    if (combatPauseSeen[key]) return;
+    try {
+        var result = webview.executeScriptSync('(' + scheduleCombatPauseInPage.toString() + ')(' +
+            JSON.stringify(url) + ',' + from + ',' + to + ');');
+        if (result === 'scheduled' || result === 'pending' || result === 'paused') {
+            combatPauseSeen[key] = true;
+        }
+        if (result === 'scheduled') log.info('识别到清怪提示，0.5 秒后暂停: ' + entry.content);
+    } catch (e) {
+        log.warn('字幕自动暂停失败: ' + e.message);
+    }
+}
 
 // ============================================================================
 // URL 解析模块
@@ -923,6 +994,7 @@ function goToPreviousPage() {
 
 // 宿主 URL 事件携带 { url }，播放更新用于补齐异步初始化后的状态。
 function onPlayerUrlChanged(data) {
+    resetCombatPause();
     var url = typeof data === 'string' ? data : (data && data.url);
     var isBilibili = parseUrl(url).isBilibili;
     if (isBilibili) queuePlaybackDefaults();
@@ -935,7 +1007,7 @@ function queuePlaybackDefaults() {
     state.pendingSubtitleEnable = state.subtitlePreferred === true;
     state.pendingPlaybackRateApply = state.defaultPlaybackRate > 0;
 
-    if (state.pendingSubtitleEnable &&
+    if ((state.pendingSubtitleEnable || combatPauseEnabled) &&
         typeof subtitle !== 'undefined' && subtitle && typeof subtitle.request === 'function') {
         subtitle.request();
     }
@@ -1345,6 +1417,7 @@ function onSubtitleLoaded(data) {
  * 字幕清空事件
  */
 function onSubtitleCleared() {
+    resetCombatPause();
     if (state.subtitlePreferred === null && state.subtitleEnabled) {
         state.subtitlePreferred = true;
     }
@@ -1375,6 +1448,7 @@ function onPanelHide(payload) {
  */
 function onLoad() {
     log.info(plugin.name + ' v' + plugin.version + ' 已加载');
+    combatPauseEnabled = config.get('combatPause.enabled', true) === true;
 
     // 加载配置
     var toggleHotkey = config.get('toggleHotkey', 'Alt+P');
@@ -1426,6 +1500,7 @@ function onLoad() {
     if (typeof subtitle !== 'undefined' && subtitle && typeof subtitle.on === 'function') {
         subtitle.on('load', onSubtitleLoaded);
         subtitle.on('clear', onSubtitleCleared);
+        subtitle.on('change', onCombatSubtitleChanged);
     }
 
     // 监听面板交互
@@ -1461,6 +1536,8 @@ function onLoad() {
  * 插件卸载
  */
 function onUnload() {
+    combatPauseEnabled = false;
+    resetCombatPause();
     log.info(plugin.name + ' 正在卸载...');
 
     // 保存窗口位置
@@ -1477,6 +1554,7 @@ function onUnload() {
     if (typeof subtitle !== 'undefined' && subtitle && typeof subtitle.off === 'function') {
         subtitle.off('load');
         subtitle.off('clear');
+        subtitle.off('change');
     }
     panel.off('pageClick');
     panel.off('actionClick');
