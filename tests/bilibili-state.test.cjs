@@ -28,6 +28,152 @@ function setup() {
     return { context, handlers };
 }
 
+function setupCombat() {
+    const { context: c, handlers } = setup();
+    let now = 0;
+    let nextTimer = 0;
+    let pauseCalls = 0;
+    const timers = new Map();
+    const videoEvents = new Map();
+    const pageEvents = new Map();
+    const video = {
+        currentTime: 10, currentSrc: 'video-part-1', paused: false, ended: false, seeking: false,
+        addEventListener: (name, fn) => videoEvents.set(name, fn),
+        removeEventListener: name => videoEvents.delete(name),
+        pause() { this.paused = true; pauseCalls++; videoEvents.get('pause')?.(); }
+    };
+    const page = vm.createContext({
+        document: { querySelector: () => video },
+        location: { href: c.player.getUrl() },
+        window: {
+            addEventListener: (name, fn) => pageEvents.set(name, fn),
+            removeEventListener: name => pageEvents.delete(name)
+        },
+        setTimeout(fn, delay) { const id = ++nextTimer; timers.set(id, { fn, at: now + delay }); return id; },
+        clearTimeout: id => timers.delete(id)
+    });
+    c.webview = {
+        executeScriptSync: script => vm.runInContext(script, page),
+        injectScript: script => vm.runInContext(script, page)
+    };
+    let requests = 0;
+    const subtitleHandlers = {};
+    c.subtitle = {
+        on: (name, fn) => subtitleHandlers[name] = fn,
+        off: name => delete subtitleHandlers[name],
+        request: () => requests++
+    };
+    c.onLoad();
+    return {
+        c, handlers, page, video, timers, videoEvents, pageEvents, subtitleHandlers,
+        pauseCalls: () => pauseCalls, requests: () => requests,
+        advance(ms) {
+            now += ms;
+            for (const [id, timer] of [...timers]) {
+                if (timer.at <= now) { timers.delete(id); timer.fn(); }
+            }
+        }
+    };
+}
+
+test('combat phrases pause at 500ms once per subtitle, independent of playback rate', () => {
+    for (const content of ['清怪', '清下怪', '打怪', '暂停清怪', '先清一下怪', '清理一下怪', '清 下 怪']) {
+        const s = setupCombat();
+        s.video.playbackRate = 2;
+        const entry = { from: 10, to: 13, content };
+        s.subtitleHandlers.change(entry);
+        s.subtitleHandlers.change(entry);
+        s.advance(499);
+        assert.equal(s.pauseCalls(), 0, content);
+        s.advance(1);
+        assert.equal(s.pauseCalls(), 1, content);
+        assert.equal(s.videoEvents.size, 0);
+        assert.equal(s.pageEvents.size, 0);
+        s.video.paused = false;
+        s.subtitleHandlers.change(null);
+        s.subtitleHandlers.change(entry);
+        s.advance(500);
+        assert.equal(s.pauseCalls(), 1, 'resume must not pause again');
+        assert.ok(s.requests() > 0, 'requests subtitle data without forcing visible subtitles');
+    }
+});
+
+test('combat matching ignores unrelated text, disabled setting and non-Bilibili pages', () => {
+    const s = setupCombat();
+    for (const content of ['往东北走', '打开地图', '暂停', 'UP主', '奇怪']) {
+        s.subtitleHandlers.change({ from: 10, to: 13, content });
+    }
+    assert.equal(s.timers.size, 0);
+    s.c.config.get = (key, fallback) => key === 'combatPause.enabled' ? false : fallback;
+    s.c.onLoad();
+    s.subtitleHandlers.change({ from: 10, to: 13, content: '清怪' });
+    assert.equal(s.timers.size, 0);
+    s.c.config.get = (_, fallback) => fallback;
+    s.c.onLoad();
+    s.c.player.getUrl = () => 'https://example.com';
+    s.subtitleHandlers.change({ from: 10, to: 13, content: '清怪' });
+    assert.equal(s.timers.size, 0);
+});
+
+test('navigation, subtitle clear, seek, manual pause and unload cancel pending combat pause', () => {
+    for (const action of ['navigation', 'clear', 'seek', 'pause', 'unload']) {
+        const s = setupCombat();
+        s.subtitleHandlers.change({ from: 10, to: 13, content: '清怪' });
+        assert.equal(s.timers.size, 1);
+        if (action === 'navigation') s.handlers.urlChanged({ url: 'https://www.bilibili.com/video/BV456' });
+        if (action === 'clear') s.subtitleHandlers.clear();
+        if (action === 'seek') s.videoEvents.get('seeking')();
+        if (action === 'pause') { s.video.pause(); s.video.paused = false; }
+        if (action === 'unload') s.c.onUnload();
+        const pauses = s.pauseCalls();
+        s.advance(500);
+        assert.equal(s.pauseCalls(), pauses, action);
+        assert.equal(s.timers.size, 0, action);
+        assert.equal(s.videoEvents.size, 0, action);
+        assert.equal(s.pageEvents.size, 0, action);
+        if (action === 'unload') assert.deepEqual(Object.keys(s.subtitleHandlers), []);
+    }
+});
+
+test('a pending pause is not postponed by another cue and later cues still work', () => {
+    const s = setupCombat();
+    s.subtitleHandlers.change({ from: 10, to: 13, content: '清怪' });
+    s.advance(300);
+    s.subtitleHandlers.change({ from: 10.2, to: 13, content: '打怪' });
+    s.advance(200);
+    assert.equal(s.pauseCalls(), 1);
+    s.video.paused = false;
+    s.video.currentTime = 20;
+    s.subtitleHandlers.change({ from: 20, to: 23, content: '清怪' });
+    s.advance(500);
+    assert.equal(s.pauseCalls(), 2);
+});
+
+test('stale cues and changed sources cannot pause a different video', () => {
+    const s = setupCombat();
+    s.subtitleHandlers.change({ from: 30, to: 33, content: '清怪' });
+    assert.equal(s.timers.size, 0);
+    s.subtitleHandlers.change({ from: 10, to: 13, content: '清怪' });
+    s.video.currentSrc = 'video-part-2';
+    s.advance(500);
+    assert.equal(s.pauseCalls(), 0);
+    s.subtitleHandlers.clear();
+    s.subtitleHandlers.change({ from: 10, to: 13, content: '清怪' });
+    s.page.location.href = 'https://www.bilibili.com/video/BV456';
+    s.advance(500);
+    assert.equal(s.pauseCalls(), 0);
+});
+
+test('an already paused video stays paused without a timer', () => {
+    const s = setupCombat();
+    s.video.paused = true;
+    s.subtitleHandlers.change({ from: 10, to: 13, content: '清怪' });
+    s.advance(500);
+    assert.equal(s.pauseCalls(), 0);
+    assert.equal(s.video.paused, true);
+    assert.equal(s.timers.size, 0);
+});
+
 test('first load and host URL events retain the requested part', () => {
     const { context: c, handlers } = setup();
     c.onLoad();

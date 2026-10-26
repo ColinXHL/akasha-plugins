@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 EXPECTED_PLUGINS = {
     "bilibili-page-list": {
-        "version": "1.3.0",
+        "version": "1.4.0",
         "permissions": {
             "events",
             "hotkey",

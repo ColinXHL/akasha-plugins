@@ -1,6 +1,18 @@
 {
   "sections": [
     {
+      "title": "字幕自动暂停",
+      "items": [
+        {
+          "type": "checkbox",
+          "key": "combatPause.enabled",
+          "label": "识别清怪提示后自动暂停",
+          "description": "字幕包含清怪、清下怪、清一下怪、清理怪、打怪、暂停清怪等提示时，延迟 0.5 秒暂停视频。同一条字幕只触发一次，需要视频提供可用字幕。",
+          "default": true
+        }
+      ]
+    },
+    {
       "title": "播放默认设置",
       "items": [
         {
