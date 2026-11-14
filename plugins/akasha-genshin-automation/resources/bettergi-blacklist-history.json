@@ -21,6 +21,16 @@
       "size": 88249,
       "sha256": "f607f1a466d58c8b5b225ecc606617f288d335d22440b30e23ca1ddcadd49ccf",
       "syncedAtUtc": "2026-09-29T00:21:40Z"
+    },
+    {
+      "sourceVersion": "0.67.0",
+      "upstreamReleaseTag": "0.67.0",
+      "upstreamReleaseUrl": "https://github.com/babalae/better-genshin-impact/releases/tag/0.67.0",
+      "upstreamAsset": "BetterGI_v0.67.0.7z",
+      "entryCount": 4924,
+      "size": 88249,
+      "sha256": "f607f1a466d58c8b5b225ecc606617f288d335d22440b30e23ca1ddcadd49ccf",
+      "syncedAtUtc": "2026-11-14T00:52:41.780195Z"
     }
   ]
 }
